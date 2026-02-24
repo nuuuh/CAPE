@@ -144,15 +144,58 @@ def load_pretrained_cape(pretrain_path, device):
 # PREDICTION COLLECTION & EVALUATION
 # =============================================================================
 
-def collect_predictions(model, dataloader, num_output, num_masks, device,
-                        config=None, use_fixed_masks=True):
-    """Collect predictions from multiple masks.
+class _PairedTokenDataset(Dataset):
+    """Internal dataset: preprocessed tokens for input, raw tokens for labels."""
+    def __init__(self, input_tokens, label_tokens, num_input, num_output):
+        total = num_input + num_output
+        self.samples = [(input_tokens[i:i+num_input], label_tokens[i+num_input:i+total])
+                        for i in range(len(input_tokens) - total + 1)]
+
+    def __len__(self): return len(self.samples)
+
+    def __getitem__(self, idx):
+        inp, out = self.samples[idx]
+        return {'input': torch.tensor(inp, dtype=torch.float32),
+                'label': torch.tensor(out, dtype=torch.float32)}
+
+
+def collect_predictions(model, all_tokens, start_idx, end_idx,
+                        num_input, num_output, num_masks, device,
+                        use_fixed_masks=True, batch_size=32):
+    """Collect CAPE multi-mask predictions for a token range.
+
+    Preprocessing (smooth_light) is applied internally to the full token
+    sequence for proper boundary handling. Raw tokens are used as labels.
+    This makes CAPE as easy to use as other foundation model baselines --
+    just provide raw data and the model handles everything internally.
+
+    Args:
+        model: Pretrained CAPE model
+        all_tokens: Full raw token sequence [num_tokens, token_size]
+        start_idx: Start index of evaluation range
+        end_idx: End index of evaluation range
+        num_input: Number of input tokens per sample
+        num_output: Number of output tokens per sample
+        num_masks: Number of compartmental masks
+        device: Torch device
+        use_fixed_masks: Use fixed masks for reproducibility
+        batch_size: DataLoader batch size
 
     Returns:
         all_preds: [num_masks, total_samples, seq, features]
         all_targets: [total_samples, seq, features]
     """
     model.eval()
+
+    # Preprocess full sequence for proper boundary handling, then slice
+    preprocessed = preprocess_smooth_light(all_tokens)
+    input_tokens = preprocessed[start_idx:end_idx]
+    label_tokens = all_tokens[start_idx:end_idx]
+
+    dataloader = DataLoader(
+        _PairedTokenDataset(input_tokens, label_tokens, num_input, num_output),
+        batch_size=batch_size, shuffle=False)
+
     if use_fixed_masks:
         fixed_masks = get_fixed_masks(num_masks, device=device)
 

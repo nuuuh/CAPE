@@ -19,7 +19,6 @@ import argparse
 import warnings
 import numpy as np
 import torch
-from torch.utils.data import Dataset, DataLoader
 from sklearn.preprocessing import StandardScaler
 from tqdm import tqdm
 from typing import Dict, List, Tuple
@@ -33,9 +32,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from evaluate_utils import (
-    setup_seed, load_pretrained_cape, TokenDataset, load_data,
-    generate_fixed_masks, get_fixed_masks,
-    collect_predictions, evaluate_ensemble, preprocess_smooth_light,
+    setup_seed, load_pretrained_cape,
+    collect_predictions, evaluate_ensemble,
 )
 from ensemble_strategies import get_ensemble_strategy, AVAILABLE_STRATEGIES
 
@@ -108,27 +106,6 @@ def compute_selected_metrics(preds: np.ndarray, targets: np.ndarray,
 
 
 # =============================================================================
-# DATASET WITH SEPARATE INPUT/LABEL SOURCES
-# =============================================================================
-
-class TokenDatasetWithOriginalLabels(Dataset):
-    """Uses preprocessed tokens for input but original tokens for labels."""
-    def __init__(self, input_tokens: np.ndarray, label_tokens: np.ndarray,
-                 num_input: int, num_output: int):
-        assert len(input_tokens) == len(label_tokens)
-        total = num_input + num_output
-        self.samples = [(input_tokens[i:i+num_input], label_tokens[i+num_input:i+total])
-                        for i in range(len(input_tokens) - total + 1)]
-
-    def __len__(self): return len(self.samples)
-
-    def __getitem__(self, idx):
-        inp, out = self.samples[idx]
-        return {'input': torch.tensor(inp, dtype=torch.float32),
-                'label': torch.tensor(out, dtype=torch.float32)}
-
-
-# =============================================================================
 # DATA LOADING
 # =============================================================================
 
@@ -146,11 +123,6 @@ def load_data_raw(data_path: str, disease: str, token_size: int = 4):
     num_tokens = len(values_norm) // token_size
     tokens = values_norm[:num_tokens * token_size].reshape(num_tokens, token_size)
     return tokens, scaler
-
-
-def prepare_cape_tokens(tokens: np.ndarray):
-    """Prepare tokens for CAPE with smooth_light preprocessing."""
-    return preprocess_smooth_light(tokens)
 
 
 def split_into_folds(tokens: np.ndarray, num_folds: int, base_train_rate: float = 0.3):
@@ -271,50 +243,39 @@ def evaluate_moment_fold(test_tokens, num_input, num_output, token_size, device,
 # FOLD EVALUATION
 # =============================================================================
 
-def evaluate_fold(
-    fold_idx: int,
-    valid_tokens: np.ndarray,
-    test_tokens: np.ndarray,
-    args,
-    chronos_test_tokens: np.ndarray = None,
-    original_valid_tokens: np.ndarray = None,
-    original_test_tokens: np.ndarray = None,
-) -> Dict:
-    """Evaluate a single fold: baselines + zero-shot CAPE ensembles."""
+def evaluate_fold(fold_idx, all_tokens, train_end, test_start, test_end, args):
+    """Evaluate a single fold: baselines + zero-shot CAPE ensembles.
+
+    All models receive the same raw tokens. CAPE handles preprocessing
+    internally via collect_predictions (smooth_light on full sequence).
+    """
     device = args.device
     num_input = args.num_input_tokens
     num_output = args.num_output_tokens
     token_size = args.token_size
     metrics_list = getattr(args, 'metrics', ['mse', 'mae'])
 
-    if chronos_test_tokens is None:
-        chronos_test_tokens = test_tokens
-    label_valid = original_valid_tokens if original_valid_tokens is not None else valid_tokens
-    label_test = original_test_tokens if original_test_tokens is not None else test_tokens
+    test_tokens = all_tokens[test_start:test_end]
 
     min_tokens = num_input + num_output + 1
     if len(test_tokens) < min_tokens:
         print(f"  [Fold {fold_idx}] Skipping: insufficient tokens")
         return {'fold': fold_idx, 'error': 'insufficient_tokens'}
 
-    valid_loader = DataLoader(
-        TokenDatasetWithOriginalLabels(valid_tokens, label_valid, num_input, num_output),
-        batch_size=32, shuffle=False)
-    test_loader = DataLoader(
-        TokenDatasetWithOriginalLabels(test_tokens, label_test, num_input, num_output),
-        batch_size=32, shuffle=False)
+    # Validation: last 10% of training data
+    valid_start = int(train_end * 0.9)
 
     results = {
         'fold': fold_idx,
-        'valid_size': len(valid_tokens),
-        'test_size': len(test_tokens),
+        'valid_size': train_end - valid_start,
+        'test_size': test_end - test_start,
     }
 
-    # ----- Baselines (use original tokens) -----
+    # ----- Baselines (raw tokens, same as CAPE) -----
     baseline_modes = {
-        'moment':   lambda: evaluate_moment_fold(chronos_test_tokens, num_input, num_output, token_size, device, metrics_list),
-        'chronos2': lambda: evaluate_chronos2_fold(chronos_test_tokens, num_input, num_output, token_size, device, metrics_list),
-        'moirai':   lambda: evaluate_moirai_fold(chronos_test_tokens, num_input, num_output, token_size, device, metrics_list),
+        'moment':   lambda: evaluate_moment_fold(test_tokens, num_input, num_output, token_size, device, metrics_list),
+        'chronos2': lambda: evaluate_chronos2_fold(test_tokens, num_input, num_output, token_size, device, metrics_list),
+        'moirai':   lambda: evaluate_moirai_fold(test_tokens, num_input, num_output, token_size, device, metrics_list),
     }
     for mode, eval_fn in baseline_modes.items():
         if mode in args.modes:
@@ -324,16 +285,18 @@ def evaluate_fold(
                 results[mode] = result
                 print(f"    {mode}: {', '.join(f'{k}={v:.4f}' for k, v in result.items())}")
 
-    # ----- Zero-shot ensembles (frozen CAPE) -----
+    # ----- Zero-shot ensembles (frozen CAPE, preprocessing internalized) -----
     if 'zeroshot' in args.modes:
         print(f"  [Fold {fold_idx}] Zero-shot ensembles...")
         model = load_pretrained_cape(args.pretrain_path, device)
 
         valid_preds, valid_targets = collect_predictions(
-            model, valid_loader, num_output, args.num_masks,
+            model, all_tokens, valid_start, train_end,
+            num_input, num_output, args.num_masks,
             device, use_fixed_masks=args.use_fixed_masks)
         test_preds, test_targets = collect_predictions(
-            model, test_loader, num_output, args.num_masks,
+            model, all_tokens, test_start, test_end,
+            num_input, num_output, args.num_masks,
             device, use_fixed_masks=args.use_fixed_masks)
 
         results['zeroshot'] = {}
@@ -367,7 +330,6 @@ def run_online_evaluation(args):
     print(f"  Pretrain: {args.pretrain_path}")
     print(f"  Folds: {args.num_folds}, Base train rate: {args.base_train_rate}")
     print(f"  Masks: {args.num_masks}, Modes: {args.modes}")
-    print(f"  Preprocessing: smooth_light")
     print("=" * 80)
 
     all_tokens, scaler = load_data_raw(args.data_path, args.disease, args.token_size)
@@ -379,29 +341,12 @@ def run_online_evaluation(args):
     for i, (te, ts, tend) in enumerate(folds):
         print(f"  Fold {i}: train=[0,{te}], test=[{ts},{tend}]")
 
-    cape_tokens = prepare_cape_tokens(all_tokens)
-
     fold_results = []
     for fold_idx, (train_end, test_start, test_end) in enumerate(folds):
         print(f"\n{'='*60}\nFOLD {fold_idx + 1}/{len(folds)}\n{'='*60}")
         print(f"  Train={train_end} tokens, Test={test_end - test_start} tokens")
 
-        chronos_test = all_tokens[test_start:test_end]
-        cape_train = cape_tokens[:train_end]
-        cape_test = cape_tokens[test_start:test_end]
-        original_test = all_tokens[test_start:test_end]
-
-        valid_rate = 0.1
-        valid_end = int(len(cape_train) * (1 - valid_rate))
-        original_train = all_tokens[:train_end]
-
-        result = evaluate_fold(
-            fold_idx,
-            cape_train[valid_end:], cape_test,
-            args,
-            chronos_test_tokens=chronos_test,
-            original_valid_tokens=original_train[valid_end:],
-            original_test_tokens=original_test)
+        result = evaluate_fold(fold_idx, all_tokens, train_end, test_start, test_end, args)
         fold_results.append(result)
 
     return aggregate_and_print_results(args, fold_results, total_tokens)
