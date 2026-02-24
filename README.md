@@ -1,5 +1,7 @@
 # CAPE: Pre-training Epidemic Time Series Forecasters with Compartmental Prototypes
 
+[[Paper]](https://arxiv.org/abs/2502.03393)
+
 A foundation model for epidemic time series forecasting that combines compartmental (SIR-family) dynamics with transformer-based token prediction. CAPE uses multi-mask ensemble inference over diverse compartmental structures to produce robust forecasts without parametric fine-tuning.
 
 ## Setup
@@ -102,5 +104,21 @@ bash src/run_second_stage_pretrain.sh
 ├── dataset/                   # Data loading & synthetic generation
 ├── data/tycho_US.pt           # Project Tycho US disease surveillance data
 └── epirecipe/                 # EpiRecipe synthetic data generation toolkit
+```
+
+## Citation
+
+If you find this work useful, please cite our paper:
+
+```bibtex
+@misc{liu2025pretrainingepidemictimeseries,
+      title={Pre-training Epidemic Time Series Forecasters with Compartmental Prototypes},
+      author={Zewen Liu and Juntong Ni and Max S. Y. Lau and Wei Jin},
+      year={2025},
+      eprint={2502.03393},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG},
+      url={https://arxiv.org/abs/2502.03393},
+}
 ```
 
