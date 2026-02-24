@@ -1,8 +1,3 @@
-"""
-Next-Token-Prediction Pretraining Script
-Trains CAPE model in an autoregressive manner similar to language model pretraining
-"""
-
 import torch
 from dataset.dataset_wrapper import DataSetWrapper
 import matplotlib.pyplot as plt

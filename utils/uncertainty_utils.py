@@ -1,13 +1,3 @@
-"""
-Uncertainty Estimation via Compartment Mask Ensembling
-
-For CompartmentalCAPE models, we can generate uncertainty estimates by:
-1. Using different compartment masks during inference
-2. Each mask configuration represents a different epidemic model structure
-3. Variance across predictions provides uncertainty estimates
-4. Similar to Monte Carlo Dropout or Deep Ensembles
-"""
-
 import torch
 import numpy as np
 from typing import Dict, List, Tuple, Optional

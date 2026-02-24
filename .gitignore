@@ -4,11 +4,7 @@ __pycache__/
 *.pyo
 *.egg-info/
 
-# Checkpoints (too large for git)
-checkpoints/
-
-# Data files
-data/*.pt
+*.pth
 
 # Backup of original source
 _src/

@@ -1,13 +1,4 @@
 #!/usr/bin/env python
-"""
-CAPE Shared Utilities for Online Evaluation
-=============================================
-Core functions for data loading, model loading, prediction collection,
-and ensemble evaluation.
-
-Used by strategy_online.py for rolling-fold evaluation.
-"""
-
 import os
 import sys
 import json
@@ -163,11 +154,6 @@ def collect_predictions(model, all_tokens, start_idx, end_idx,
                         num_input, num_output, num_masks, device,
                         use_fixed_masks=True, batch_size=32):
     """Collect CAPE multi-mask predictions for a token range.
-
-    Preprocessing (smooth_light) is applied internally to the full token
-    sequence for proper boundary handling. Raw tokens are used as labels.
-    This makes CAPE as easy to use as other foundation model baselines --
-    just provide raw data and the model handles everything internally.
 
     Args:
         model: Pretrained CAPE model

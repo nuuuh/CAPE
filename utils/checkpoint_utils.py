@@ -1,6 +1,3 @@
-"""
-Utility functions for loading model checkpoints
-"""
 import os
 import glob
 import json

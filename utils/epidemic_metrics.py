@@ -1,17 +1,4 @@
 #!/usr/bin/env python
-"""
-Epidemic-Specific Metrics for Forecasting Evaluation
-=====================================================
-Metrics designed for public health decision-making, emphasizing outbreak detection
-and epidemic trajectory accuracy over general forecasting error.
-
-Key Metrics:
-- Outbreak Detection Recall: Sensitivity to high-value periods (critical for early warning)
-- Alert Sensitivity: Threshold-crossing detection accuracy
-- Peak Underestimate Rate: Tendency to underestimate during peaks
-- Rising Phase MAE: Error during epidemic growth phases
-"""
-
 import numpy as np
 from typing import Dict, Optional, Tuple
 

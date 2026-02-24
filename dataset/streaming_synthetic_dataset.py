@@ -1,10 +1,3 @@
-"""
-Streaming Synthetic Dataset for Next-Token Prediction
-Generates epidemic data on-the-fly during training (infinite data stream)
-
-NEW: Supports GP-augmented data for learning periodic patterns (KernelSynth-inspired)
-"""
-
 import torch
 from torch.utils.data import IterableDataset, Dataset
 import numpy as np
@@ -21,9 +14,6 @@ class StreamingSyntheticDataset(IterableDataset):
     """
     Infinite streaming dataset that generates synthetic epidemics on-the-fly
     Each worker generates data independently during training
-    
-    NEW: Supports group-stratified models with R0 matrix supervision
-    NEW: Supports GP-augmented data for learning periodic patterns
     """
     
     def __init__(
@@ -284,8 +274,6 @@ class FixedSyntheticDataset(Dataset):
     """
     Fixed-size synthetic dataset (pre-generated but still created on initialization)
     Better for validation/test where we want consistent samples
-    
-    NEW: Supports group-stratified models with R0 matrix supervision
     """
     
     def __init__(
@@ -436,13 +424,6 @@ def collate_variable_length(batch):
     that indicates which positions contain real data (True) vs padding (False).
     This mask should be used during loss calculation and visualization to ignore
     padded positions.
-    
-    IMPORTANT: Each sample in the batch may have different active compartments.
-    We need to handle this by storing per-sample compartment targets separately,
-    not by creating a union of all compartments and zero-padding.
-    
-    The compartment_mask for each sample indicates which compartments are active.
-    The sequence_mask indicates which time positions are valid (not padded).
     """
     # Find max sequence length in this batch
     max_len = max(item['input'].shape[0] for item in batch)

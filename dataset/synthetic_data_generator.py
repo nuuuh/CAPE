@@ -1,8 +1,3 @@
-"""Synthetic epidemic data generator for next-token pretraining
-Uses epirecipe pipeline to generate multivariate time series on-the-fly
-Supports both non-stratified and group-stratified models
-"""
-
 import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))

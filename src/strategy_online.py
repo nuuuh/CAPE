@@ -1,17 +1,4 @@
 #!/usr/bin/env python
-"""
-CAPE Online Evaluation with Ensemble Strategies
-=================================================
-Rolling-fold evaluation pipeline:
-1. Data split into folds with expanding training window
-2. Each fold: baselines + frozen CAPE with ensemble strategies
-3. Results aggregated across folds
-
-Modes:
-  - chronos2, moirai, moment: Foundation model baselines
-  - zeroshot: Frozen CAPE with non-learnable ensemble strategies
-"""
-
 import os
 import sys
 import json

@@ -1,17 +1,4 @@
 #!/usr/bin/env python
-"""
-Second-Stage Pretraining on Real-World Disease Data
-====================================================
-Continues pretraining CAPE model on the first 20% of time series from all diseases
-in the Tycho dataset. This bridges the gap between synthetic pretraining and
-disease-specific finetuning.
-
-Usage:
-    python second_stage_pretrain.py --backbone_path checkpoints/pretraining/next_token_pretrain_v5/checkpoint.pth
-    python second_stage_pretrain.py --backbone_path ... --epochs 50 --lr 1e-4
-    python second_stage_pretrain.py --backbone_path ... --pretrain_ratio 0.3
-"""
-
 import os
 import sys
 import json
