@@ -113,7 +113,7 @@ If you find this work useful, please cite our paper:
 ```bibtex
 @misc{liu2025pretrainingepidemictimeseries,
       title={Pre-training Epidemic Time Series Forecasters with Compartmental Prototypes},
-      author={Zewen Liu and Juntong Ni and Max S. Y. Lau and Wei Jin},
+      author={Zewen Liu and Juntong Ni and Bohan Wang and Max S. Y. Lau and Wei Jin},
       year={2025},
       eprint={2502.03393},
       archivePrefix={arXiv},
