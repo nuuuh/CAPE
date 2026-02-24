@@ -1,13 +1,3 @@
-"""
-Group-stratified epidemic modeling extension for EpiRecipe
-
-Supports:
-- Age-stratified models (e.g., children, adults, elderly)
-- Spatial groups (e.g., different regions/patches)
-- Risk groups (e.g., healthcare workers, general population)
-- Custom mixing matrices for between-group transmission
-"""
-
 import numpy as np
 import pandas as pd
 from typing import Dict, List, Tuple, Optional, Union

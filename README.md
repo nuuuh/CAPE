@@ -1,6 +1,6 @@
-# CAPE: Compartmental-Augmented Pre-training for Epidemic Forecasting
+# CAPE: Pre-training Epidemic Time Series Forecasters with Compartmental Prototypes
 
-A foundation model for epidemic time series forecasting that combines compartmental (SIR-family) dynamics with transformer-based token prediction. CAPE uses multi-mask ensemble inference over diverse compartmental structures to produce robust forecasts without disease-specific fine-tuning.
+A foundation model for epidemic time series forecasting that combines compartmental (SIR-family) dynamics with transformer-based token prediction. CAPE uses multi-mask ensemble inference over diverse compartmental structures to produce robust forecasts without parametric fine-tuning.
 
 ## Setup
 
@@ -12,7 +12,7 @@ conda activate cape
 pip install -r requirements.txt
 ```
 
-**Checkpoints:** Download from [Google Drive](https://drive.google.com/drive/folders/1UiGo4go9sCCIcGCPITbfWvRojSSgaJk6?usp=drive_link) and place the `checkpoints/` folder in the project root:
+**Checkpoints:** Download from [Google Drive](https://drive.google.com/drive/folders/1UiGo4go9sCCIcGCPITbfWvRojSSgaJk6?usp=sharing) and place the `checkpoints/` folder in the project root:
 
 ```
 CAPE/
@@ -31,7 +31,7 @@ CAPE/
 
 ## Evaluation
 
-Run the rolling-fold online evaluation across diseases:
+Run evaluation across diseases:
 
 ```bash
 # Evaluate all modes (chronos2, moirai, moment, zeroshot) on default diseases
@@ -55,7 +55,7 @@ Summarize results and generate radar plots:
 python src/summarize_results.py --plot_radar
 ```
 
-Results are saved to `src/results_online/`. Reference results for all 17 diseases are in `src/ref_results/`.
+Results are saved to `src/results_online/`.
 
 ### Diseases
 

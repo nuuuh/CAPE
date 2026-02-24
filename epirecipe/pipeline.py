@@ -1,15 +1,3 @@
-"""Enhanced EpiRecipe Pipeline - Constraint-Based Model Generation
-===================================================================
-
-This module implements an improved pipeline for generating diverse, valid
-compartmental epidemic models with:
-
-1. Constraint-based compartment selection and topology construction
-2. Hierarchical parameter sampling (epidemiologically consistent)
-3. Model validation with invariant checking
-4. Configurable observables
-5. Population stratification as first-class citizen
-"""
 from __future__ import annotations
 
 import json

@@ -1,10 +1,3 @@
-"""Random recipe sampler for 6-stage pipeline
-===========================================
-
-Utility script that generates multiple diverse compartmental models using the
-6-stage pipeline, runs simulations, and stores results with metadata.
-Supports optional group-stratified modeling.
-"""
 from __future__ import annotations
 
 import argparse

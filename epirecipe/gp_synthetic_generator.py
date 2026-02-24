@@ -1,11 +1,3 @@
-"""
-Gaussian Process Synthetic Time Series Generator
-Inspired by Chronos KernelSynth for generating diverse periodic patterns
-
-This module generates pure GP-based time series to augment EpiRecipe data.
-Uses Option A: GP samples are treated as "I-only" mode with I compartment mask.
-"""
-
 import numpy as np
 from typing import Dict, List, Tuple, Optional
 import functools

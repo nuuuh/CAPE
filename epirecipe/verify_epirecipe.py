@@ -1,7 +1,3 @@
-"""
-Comprehensive verification of EpiRecipe simulation correctness
-"""
-
 import numpy as np
 import matplotlib.pyplot as plt
 from old.pipeline import EpiRecipePipeline, Selection
