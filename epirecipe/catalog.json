@@ -1,0 +1,959 @@
+{
+    "version": "3.0.0",
+    "description": "Enhanced catalog for generating diverse, valid compartmental epidemic models. Features constraint-based topology construction and hierarchical parameter sampling.",
+    "compartments": {
+        "S": {
+            "type": "susceptible",
+            "required": true,
+            "description": "Susceptible individuals who can contract the disease.",
+            "role": "source",
+            "conservation": true
+        },
+        "I": {
+            "type": "infectious",
+            "required": true,
+            "description": "Infectious individuals who can transmit the disease.",
+            "role": "infectious",
+            "conservation": true
+        },
+        "E": {
+            "type": "latent",
+            "required": false,
+            "description": "Exposed (infected but not yet infectious) individuals.",
+            "role": "intermediate",
+            "conservation": true,
+            "requires_inflow_from": [
+                "S"
+            ],
+            "requires_outflow_to": [
+                "I",
+                "A"
+            ]
+        },
+        "R": {
+            "type": "removed",
+            "required": false,
+            "description": "Recovered or removed individuals with immunity.",
+            "role": "sink",
+            "conservation": true
+        },
+        "A": {
+            "type": "infectious",
+            "required": false,
+            "description": "Asymptomatic infectious individuals.",
+            "role": "infectious",
+            "conservation": true,
+            "requires_compartment": [
+                "E"
+            ],
+            "requires_inflow_from": [
+                "E"
+            ]
+        },
+        "H": {
+            "type": "severe",
+            "required": false,
+            "description": "Hospitalized individuals.",
+            "role": "severe",
+            "conservation": true,
+            "requires_inflow_from": [
+                "I"
+            ]
+        },
+        "D": {
+            "type": "terminal",
+            "required": false,
+            "description": "Deceased individuals.",
+            "role": "terminal_sink",
+            "conservation": false
+        },
+        "V": {
+            "type": "protected",
+            "required": false,
+            "description": "Vaccinated individuals.",
+            "role": "protected",
+            "conservation": true,
+            "requires_inflow_from": [
+                "S"
+            ]
+        },
+        "Q": {
+            "type": "isolated",
+            "required": false,
+            "description": "Quarantined individuals under isolation.",
+            "role": "isolated",
+            "conservation": true,
+            "requires_inflow_from": [
+                "I",
+                "E"
+            ]
+        },
+        "W": {
+            "type": "reservoir",
+            "required": false,
+            "description": "Environmental reservoir (e.g., water, surfaces).",
+            "role": "reservoir",
+            "conservation": false,
+            "requires_inflow_from": [
+                "I",
+                "A"
+            ]
+        },
+        "C": {
+            "type": "chronic",
+            "required": false,
+            "description": "Chronic carriers with prolonged infectiousness.",
+            "role": "infectious",
+            "conservation": true,
+            "requires_inflow_from": [
+                "I"
+            ]
+        },
+        "P": {
+            "type": "protected",
+            "required": false,
+            "description": "Protected individuals (e.g., due to prophylaxis).",
+            "role": "protected",
+            "conservation": true,
+            "requires_inflow_from": [
+                "S"
+            ]
+        }
+    },
+    "topology_rules": {
+        "description": "Rules for automatic transition construction based on compartments",
+        "mandatory_transitions": [
+            {
+                "condition": "always",
+                "transition": "infection",
+                "description": "Every model must have infection S -> E or S -> I"
+            },
+            {
+                "condition": "E in compartments",
+                "transition": "E_to_I",
+                "description": "If E exists, must have E -> I (and optionally E -> A)"
+            },
+            {
+                "condition": "R in compartments and I in compartments",
+                "transition": "I_to_R",
+                "description": "If R exists, infectious must be able to recover"
+            }
+        ],
+        "conditional_transitions": [
+            {
+                "condition": "H in compartments",
+                "transitions": [
+                    "I_to_H",
+                    "H_to_R_or_D"
+                ],
+                "description": "Hospitalized needs inflow from I and outflow"
+            },
+            {
+                "condition": "A in compartments",
+                "transitions": [
+                    "E_to_A",
+                    "A_to_R"
+                ],
+                "description": "Asymptomatic needs inflow from E and recovery"
+            },
+            {
+                "condition": "D in compartments",
+                "transitions": [
+                    "death_pathway"
+                ],
+                "description": "Death needs inflow from I or H"
+            },
+            {
+                "condition": "V in compartments",
+                "transitions": [
+                    "S_to_V"
+                ],
+                "description": "Vaccination from S"
+            },
+            {
+                "condition": "Q in compartments",
+                "transitions": [
+                    "quarantine_pathway",
+                    "Q_release"
+                ],
+                "description": "Quarantine needs inflow and release"
+            },
+            {
+                "condition": "W in compartments",
+                "transitions": [
+                    "shedding",
+                    "W_decay"
+                ],
+                "description": "Environment needs shedding input and decay"
+            },
+            {
+                "condition": "C in compartments",
+                "transitions": [
+                    "I_to_C",
+                    "C_to_R"
+                ],
+                "description": "Chronic carrier needs inflow and clearance"
+            }
+        ],
+        "optional_transitions": [
+            {
+                "condition": "R in compartments",
+                "transition": "waning_immunity",
+                "probability": 0.3,
+                "description": "R -> S with waning immunity"
+            },
+            {
+                "condition": "V in compartments",
+                "transition": "vaccine_waning",
+                "probability": 0.4,
+                "description": "V -> S with vaccine waning"
+            }
+        ]
+    },
+    "dynamics": {
+        "infection": {
+            "description": "Mathematical forms for infection transmission",
+            "variants": {
+                "mass_action": {
+                    "equation": "beta * S * I / N",
+                    "description": "Standard frequency-dependent transmission",
+                    "parameters": [
+                        "beta"
+                    ],
+                    "weight": 0.4
+                },
+                "with_asymptomatic": {
+                    "equation": "beta * S * (I + epsilon * A) / N",
+                    "description": "Transmission including asymptomatic",
+                    "parameters": [
+                        "beta",
+                        "epsilon"
+                    ],
+                    "requires": [
+                        "A"
+                    ],
+                    "weight": 0.3
+                },
+                "with_chronic": {
+                    "equation": "beta * S * (I + delta_C * C) / N",
+                    "description": "Transmission including chronic carriers",
+                    "parameters": [
+                        "beta",
+                        "delta_C"
+                    ],
+                    "requires": [
+                        "C"
+                    ],
+                    "weight": 0.2
+                },
+                "environmental": {
+                    "equation": "beta_W * S * W / (K + W)",
+                    "description": "Environmental/waterborne transmission",
+                    "parameters": [
+                        "beta_W",
+                        "K"
+                    ],
+                    "requires": [
+                        "W"
+                    ],
+                    "weight": 0.2
+                },
+                "combined_environmental": {
+                    "equation": "beta * S * (I + rho * W) / N",
+                    "description": "Direct + environmental transmission",
+                    "parameters": [
+                        "beta",
+                        "rho"
+                    ],
+                    "requires": [
+                        "W"
+                    ],
+                    "weight": 0.2
+                },
+                "hospital_nosocomial": {
+                    "equation": "beta * S * (I + theta * H) / N",
+                    "description": "Including nosocomial transmission",
+                    "parameters": [
+                        "beta",
+                        "theta"
+                    ],
+                    "requires": [
+                        "H"
+                    ],
+                    "weight": 0.15
+                },
+                "saturating": {
+                    "equation": "beta * S * I / (N * (1 + alpha * I))",
+                    "description": "Saturating incidence (behavioral response)",
+                    "parameters": [
+                        "beta",
+                        "alpha"
+                    ],
+                    "weight": 0.1
+                }
+            }
+        },
+        "latent_progression": {
+            "description": "E -> I (and possibly A) progression",
+            "variants": {
+                "simple": {
+                    "equation": "sigma * E",
+                    "target": "I",
+                    "parameters": [
+                        "sigma"
+                    ],
+                    "weight": 0.6
+                },
+                "branching": {
+                    "equation": "sigma * E",
+                    "targets": {
+                        "I": "p_sym",
+                        "A": "1 - p_sym"
+                    },
+                    "parameters": [
+                        "sigma",
+                        "p_sym"
+                    ],
+                    "requires": [
+                        "A"
+                    ],
+                    "weight": 0.4
+                }
+            }
+        },
+        "recovery": {
+            "description": "Recovery from infectious states",
+            "variants": {
+                "constant_rate": {
+                    "equation": "gamma * X",
+                    "description": "Constant recovery rate",
+                    "parameters": [
+                        "gamma"
+                    ],
+                    "weight": 0.7
+                },
+                "resource_limited": {
+                    "equation": "gamma * X / (1 + omega * X)",
+                    "description": "Recovery limited by healthcare capacity",
+                    "parameters": [
+                        "gamma",
+                        "omega"
+                    ],
+                    "weight": 0.3
+                }
+            }
+        },
+        "hospitalization": {
+            "description": "I -> H progression",
+            "variants": {
+                "constant_rate": {
+                    "equation": "eta * I",
+                    "parameters": [
+                        "eta"
+                    ],
+                    "weight": 0.7
+                },
+                "severity_dependent": {
+                    "equation": "eta * I * (1 + kappa * I / N)",
+                    "description": "Increases with disease burden",
+                    "parameters": [
+                        "eta",
+                        "kappa"
+                    ],
+                    "weight": 0.3
+                }
+            }
+        },
+        "death": {
+            "description": "Mortality transitions",
+            "variants": {
+                "from_infectious": {
+                    "equation": "mu * I",
+                    "source": "I",
+                    "parameters": [
+                        "mu"
+                    ],
+                    "weight": 0.5
+                },
+                "from_hospital": {
+                    "equation": "mu_H * H",
+                    "source": "H",
+                    "parameters": [
+                        "mu_H"
+                    ],
+                    "requires": [
+                        "H"
+                    ],
+                    "weight": 0.5
+                }
+            }
+        },
+        "vaccination": {
+            "description": "S -> V vaccination",
+            "variants": {
+                "constant_campaign": {
+                    "equation": "nu",
+                    "description": "Fixed number vaccinated per time",
+                    "parameters": [
+                        "nu"
+                    ],
+                    "weight": 0.4
+                },
+                "proportional": {
+                    "equation": "p_vax * S",
+                    "description": "Proportional to susceptibles",
+                    "parameters": [
+                        "p_vax"
+                    ],
+                    "weight": 0.6
+                }
+            }
+        },
+        "quarantine": {
+            "description": "Quarantine dynamics",
+            "variants": {
+                "from_infectious": {
+                    "equation": "tau_Q * I",
+                    "source": "I",
+                    "parameters": [
+                        "tau_Q"
+                    ],
+                    "weight": 0.6
+                },
+                "from_exposed": {
+                    "equation": "tau_Q * E",
+                    "source": "E",
+                    "parameters": [
+                        "tau_Q"
+                    ],
+                    "requires": [
+                        "E"
+                    ],
+                    "weight": 0.4
+                }
+            }
+        },
+        "quarantine_release": {
+            "description": "Q -> R or Q -> S release",
+            "variants": {
+                "to_recovered": {
+                    "equation": "rho_Q * Q",
+                    "target": "R",
+                    "parameters": [
+                        "rho_Q"
+                    ],
+                    "requires": [
+                        "R"
+                    ],
+                    "weight": 0.7
+                },
+                "to_susceptible": {
+                    "equation": "rho_Q * Q",
+                    "target": "S",
+                    "parameters": [
+                        "rho_Q"
+                    ],
+                    "weight": 0.3
+                }
+            }
+        },
+        "environmental_shedding": {
+            "description": "Shedding to environmental reservoir",
+            "variants": {
+                "from_infectious": {
+                    "equation": "xi * I",
+                    "parameters": [
+                        "xi"
+                    ],
+                    "weight": 0.6
+                },
+                "with_asymptomatic": {
+                    "equation": "xi * (I + delta_A * A)",
+                    "parameters": [
+                        "xi",
+                        "delta_A"
+                    ],
+                    "requires": [
+                        "A"
+                    ],
+                    "weight": 0.4
+                }
+            }
+        },
+        "environmental_decay": {
+            "equation": "zeta * W",
+            "parameters": [
+                "zeta"
+            ]
+        },
+        "chronic_progression": {
+            "equation": "chi * I",
+            "parameters": [
+                "chi"
+            ]
+        },
+        "chronic_clearance": {
+            "equation": "gamma_C * C",
+            "parameters": [
+                "gamma_C"
+            ]
+        },
+        "waning_immunity": {
+            "equation": "omega * R",
+            "parameters": [
+                "omega"
+            ]
+        },
+        "vaccine_waning": {
+            "equation": "omega_V * V",
+            "parameters": [
+                "omega_V"
+            ]
+        }
+    },
+    "parameter_distributions": {
+        "description": "Hierarchical parameter sampling with epidemiological constraints",
+        "primary_parameters": {
+            "R0": {
+                "distribution": "log_normal",
+                "mean": 2.5,
+                "std": 0.8,
+                "range": [
+                    1.1,
+                    18.0
+                ],
+                "description": "Basic reproduction number - sample first"
+            },
+            "infectious_period_days": {
+                "distribution": "gamma",
+                "shape": 3.0,
+                "scale": 3.0,
+                "range": [
+                    3,
+                    21
+                ],
+                "description": "Duration of infectiousness in days"
+            },
+            "latent_period_days": {
+                "distribution": "gamma",
+                "shape": 2.0,
+                "scale": 2.5,
+                "range": [
+                    1,
+                    14
+                ],
+                "description": "Duration of latent period in days",
+                "requires": [
+                    "E"
+                ]
+            }
+        },
+        "derived_parameters": {
+            "gamma": {
+                "derived_from": "infectious_period_days",
+                "formula": "1 / infectious_period_days",
+                "description": "Recovery rate"
+            },
+            "sigma": {
+                "derived_from": "latent_period_days",
+                "formula": "1 / latent_period_days",
+                "description": "Latent to infectious rate"
+            },
+            "beta": {
+                "derived_from": [
+                    "R0",
+                    "gamma"
+                ],
+                "formula": "R0 * gamma",
+                "description": "Transmission rate"
+            }
+        },
+        "secondary_parameters": {
+            "epsilon": {
+                "range": [
+                    0.3,
+                    0.9
+                ],
+                "default": 0.5,
+                "description": "Relative infectiousness of asymptomatic"
+            },
+            "delta_C": {
+                "range": [
+                    0.1,
+                    0.5
+                ],
+                "default": 0.3,
+                "description": "Relative infectiousness of chronic carriers"
+            },
+            "p_sym": {
+                "range": [
+                    0.3,
+                    0.8
+                ],
+                "default": 0.6,
+                "description": "Proportion becoming symptomatic"
+            },
+            "eta": {
+                "range": [
+                    0.01,
+                    0.15
+                ],
+                "default": 0.05,
+                "description": "Hospitalization rate"
+            },
+            "mu": {
+                "range": [
+                    0.001,
+                    0.03
+                ],
+                "default": 0.01,
+                "description": "Disease-induced mortality rate"
+            },
+            "mu_H": {
+                "range": [
+                    0.02,
+                    0.15
+                ],
+                "default": 0.05,
+                "description": "Hospital mortality rate"
+            },
+            "gamma_H": {
+                "range": [
+                    0.05,
+                    0.2
+                ],
+                "default": 0.1,
+                "description": "Hospital discharge rate"
+            },
+            "gamma_A": {
+                "range": [
+                    0.1,
+                    0.3
+                ],
+                "default": 0.15,
+                "description": "Asymptomatic recovery rate"
+            },
+            "gamma_C": {
+                "range": [
+                    0.005,
+                    0.05
+                ],
+                "default": 0.01,
+                "description": "Chronic carrier clearance rate"
+            },
+            "chi": {
+                "range": [
+                    0.01,
+                    0.1
+                ],
+                "default": 0.02,
+                "description": "Chronic carrier development rate"
+            },
+            "omega": {
+                "range": [
+                    0.001,
+                    0.02
+                ],
+                "default": 0.005,
+                "description": "Immunity waning rate"
+            },
+            "omega_V": {
+                "range": [
+                    0.002,
+                    0.01
+                ],
+                "default": 0.005,
+                "description": "Vaccine immunity waning rate"
+            },
+            "p_vax": {
+                "range": [
+                    0.001,
+                    0.02
+                ],
+                "default": 0.005,
+                "description": "Vaccination rate (proportional)"
+            },
+            "nu": {
+                "range": [
+                    10,
+                    500
+                ],
+                "default": 100,
+                "description": "Vaccination rate (constant campaign)"
+            },
+            "tau_Q": {
+                "range": [
+                    0.01,
+                    0.1
+                ],
+                "default": 0.03,
+                "description": "Quarantine rate"
+            },
+            "rho_Q": {
+                "range": [
+                    0.05,
+                    0.15
+                ],
+                "default": 0.1,
+                "description": "Quarantine release rate"
+            },
+            "xi": {
+                "range": [
+                    0.001,
+                    0.1
+                ],
+                "default": 0.01,
+                "description": "Environmental shedding rate"
+            },
+            "zeta": {
+                "range": [
+                    0.05,
+                    0.5
+                ],
+                "default": 0.1,
+                "description": "Environmental decay rate"
+            },
+            "beta_W": {
+                "range": [
+                    0.001,
+                    0.1
+                ],
+                "default": 0.01,
+                "description": "Environmental transmission rate"
+            },
+            "K": {
+                "range": [
+                    100,
+                    10000
+                ],
+                "default": 1000,
+                "description": "Environmental saturation constant"
+            },
+            "rho": {
+                "range": [
+                    0.1,
+                    1.0
+                ],
+                "default": 0.5,
+                "description": "Environmental contribution to transmission"
+            },
+            "theta": {
+                "range": [
+                    0.1,
+                    0.5
+                ],
+                "default": 0.2,
+                "description": "Hospital nosocomial transmission factor"
+            },
+            "alpha": {
+                "range": [
+                    0.0001,
+                    0.01
+                ],
+                "default": 0.001,
+                "description": "Saturation parameter for behavioral response"
+            },
+            "delta_A": {
+                "range": [
+                    0.3,
+                    1.0
+                ],
+                "default": 0.5,
+                "description": "Relative shedding from asymptomatic"
+            }
+        },
+        "population_parameters": {
+            "population": {
+                "range": [
+                    1000,
+                    100000
+                ],
+                "default": 10000,
+                "description": "Total population size"
+            },
+            "initial_infected": {
+                "range": [
+                    1,
+                    50
+                ],
+                "default": 10,
+                "description": "Initial number of infected"
+            },
+            "initial_exposed_multiplier": {
+                "range": [
+                    1.0,
+                    3.0
+                ],
+                "default": 2.0,
+                "description": "Multiplier for initial exposed relative to infected"
+            }
+        },
+        "simulation_parameters": {
+            "max_time_steps": {
+                "default": 250,
+                "description": "Maximum simulation time steps"
+            },
+            "dt": {
+                "default": 1.0,
+                "description": "Time step size"
+            },
+            "time_unit": {
+                "default": "days",
+                "options": [
+                    "days",
+                    "weeks"
+                ],
+                "description": "Time unit for simulation"
+            }
+        }
+    },
+    "validation_rules": {
+        "population_conservation": {
+            "description": "Living compartments must sum to population minus deaths",
+            "living_compartments": [
+                "S",
+                "E",
+                "I",
+                "A",
+                "R",
+                "H",
+                "V",
+                "Q",
+                "C",
+                "P"
+            ],
+            "death_compartment": "D",
+            "reservoir_compartments": [
+                "W"
+            ]
+        },
+        "no_dead_ends": {
+            "description": "Every non-terminal compartment must have outflow",
+            "terminal_compartments": [
+                "D"
+            ],
+            "sink_compartments": [
+                "R"
+            ]
+        },
+        "infectious_pathway": {
+            "description": "Must have path from S to infectious compartments",
+            "infectious_compartments": [
+                "I",
+                "A",
+                "C"
+            ]
+        },
+        "R0_positive": {
+            "description": "R0 must be positive for epidemic spread"
+        },
+        "numerical_stability": {
+            "max_rate": 10.0,
+            "description": "Rates should not exceed max_rate for numerical stability"
+        }
+    },
+    "observables": {
+        "incidence": {
+            "description": "New infections per time step",
+            "formula": "infection_flow",
+            "always_available": true
+        },
+        "prevalence": {
+            "description": "Current infectious individuals",
+            "formula": "I + (A if A else 0) + (C if C else 0)",
+            "always_available": true
+        },
+        "hospitalizations": {
+            "description": "Current hospitalizations",
+            "formula": "H",
+            "requires": [
+                "H"
+            ]
+        },
+        "deaths": {
+            "description": "Cumulative deaths",
+            "formula": "D",
+            "requires": [
+                "D"
+            ]
+        },
+        "cumulative_infections": {
+            "description": "Total infections over time",
+            "formula": "sum(incidence)",
+            "always_available": true
+        },
+        "R_effective": {
+            "description": "Effective reproduction number",
+            "formula": "R0 * S / N",
+            "always_available": true
+        },
+        "attack_rate": {
+            "description": "Fraction of population infected",
+            "formula": "cumulative_infections / N",
+            "always_available": true
+        }
+    },
+    "stratification": {
+        "description": "Population stratification configuration",
+        "supported_dimensions": [
+            "age",
+            "risk",
+            "spatial",
+            "custom"
+        ],
+        "presets": {
+            "age_3groups": {
+                "groups": [
+                    {
+                        "name": "children",
+                        "fraction": 0.2,
+                        "contact_mult": 1.5,
+                        "suscept_mult": 0.8
+                    },
+                    {
+                        "name": "adults",
+                        "fraction": 0.6,
+                        "contact_mult": 1.0,
+                        "suscept_mult": 1.0
+                    },
+                    {
+                        "name": "elderly",
+                        "fraction": 0.2,
+                        "contact_mult": 0.6,
+                        "suscept_mult": 1.5
+                    }
+                ],
+                "default_mixing": "assortative"
+            },
+            "risk_2groups": {
+                "groups": [
+                    {
+                        "name": "low_risk",
+                        "fraction": 0.85,
+                        "suscept_mult": 1.0,
+                        "severity_mult": 0.5
+                    },
+                    {
+                        "name": "high_risk",
+                        "fraction": 0.15,
+                        "suscept_mult": 1.2,
+                        "severity_mult": 2.0
+                    }
+                ],
+                "default_mixing": "homogeneous"
+            }
+        },
+        "mixing_types": {
+            "homogeneous": {
+                "description": "Equal contact between all groups"
+            },
+            "assortative": {
+                "description": "Preferential within-group contact",
+                "default_assortativity": 0.7
+            },
+            "hierarchical": {
+                "description": "Age-like structure with stronger nearby mixing"
+            }
+        }
+    }
+}

@@ -1,0 +1,27 @@
+Category,Name,Requires Compartments,Target Compartments,Equation,Description,Parameters
+Infection,standard_mixing,"S, I","S, I","beta * S * (I + epsilon * A + delta_C * C) / N","Weighted sum infection. A and C can contribute.","beta, epsilon, delta_C"
+Infection,environmental_cholera,"S, W","S, I","beta_W * S * W / (K + W)","Infection from W with saturation.","beta_W, K"
+Infection,fomite_surface,"S, I, W","S, I","beta * S * (I + rho * W) / N","Infection from I plus environment W.","beta, rho"
+Infection,vector_borne_proxy,"S, I","S, I","beta * S * (I / N) * exp(-alpha * I)","Infection slows if I gets too high.","beta, alpha"
+Infection,hospital_leakage,"S, I, H","S, I","beta * S * (I + theta * H) / N","Nosocomial infection from H.","beta, theta"
+Infection,power_law_mixing,"S, I","S, I","beta * (S ** p_power) * (I ** q_power)","Power law mixing.","beta, p_power, q_power"
+Progression,simple_linear,E,I,sigma * E,"Latent to infectious progression.",sigma
+Progression,branching_split,E,"I, A","sigma * E -> p * I, (1-p) * A","Split exposed into I and A.","sigma, p_branch"
+Progression,severity_trigger,I,H,eta * I,"Progression to hospitalization.",eta
+Progression,overflow_trigger,I,H,"eta * I * sigmoid(I)","Panic seeking of care when I is high.","eta, I_threshold"
+Progression,chronic_failure,I,C,chi * I,"Progression to chronic carrier.",chi
+Progression,hospital_death,H,D,mu_H * H,"Death from hospital.",mu_H
+Progression,disease_induced_death,I,D,mu * I,"Direct death from I.",mu
+Recovery,constant_recovery,I,R,gamma * I,"Standard recovery.",gamma
+Recovery,resource_constraints,H,R,"gamma_H * H / (1 + omega_H * H)","Hospital discharge slows if overcrowded.","gamma_H, omega_H"
+Recovery,waning_immunity,R,S,omega * R,"Return to susceptibility.",omega
+Recovery,carrier_clearance,C,R,gamma_C * C,"Slow recovery from carrier.",gamma_C
+Intervention,campaign_mode,S,V,nu_campaign,"Constant vaccination rate.",nu_campaign
+Intervention,proportional_vax,S,V,p_vax * S,"Proportional vaccination.",p_vax
+Intervention,reactive_quarantine,"I, Q","I, Q",tau_Q * I * I,"Quarantine rate increases with I.",tau_Q
+Intervention,tracing_efficiency,"S, E, Q","E, Q","k_trace * (Infection_Flow)","Contact tracing moves E to Q.",k_trace
+Intervention,prophylaxis_decay,P,S,delta_P * P,"Protection wears off.",delta_P
+Reservoir,shedding,I,W,xi * I,"Shedding into environment.",xi
+Reservoir,asymptomatic_shedding,"I, A",W,"xi * (I + delta_A * A)","Shedding from I and A.","xi, delta_A"
+Reservoir,environmental_decay,W,W,zeta * W,"Decay of pathogen in environment.",zeta
+Demography,birth_import,S,"S, I, R, E, A","Lambda - mu_nat * Pop","Demographics.","Lambda, mu_nat"

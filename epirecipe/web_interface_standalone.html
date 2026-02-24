@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EpiRecipe Interactive Builder - Enhanced with Group Stratification</title>
+    <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 450px 1fr;
+            gap: 0;
+            min-height: 800px;
+        }
+
+        .controls-panel {
+            background: #f8f9fa;
+            padding: 25px;
+            border-right: 2px solid #dee2e6;
+            overflow-y: auto;
+            max-height: calc(100vh - 180px);
+        }
+
+        .viz-panel {
+            padding: 25px;
+            overflow-y: auto;
+            max-height: calc(100vh - 180px);
+        }
+
+        .section {
+            margin-bottom: 20px;
+            background: white;
+            padding: 18px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .section h3 {
+            color: #667eea;
+            margin-bottom: 12px;
+            font-size: 1.1em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 6px;
+        }
+
+        .section.stratified h3 {
+            color: #28a745;
+            border-bottom-color: #28a745;
+        }
+
+        .control-group {
+            margin-bottom: 12px;
+        }
+
+        .control-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #495057;
+            font-size: 0.85em;
+        }
+
+        .control-group input[type="number"],
+        .control-group input[type="range"],
+        .control-group select {
+            width: 100%;
+            padding: 8px;
+            border: 2px solid #dee2e6;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        .control-group input[type="range"] {
+            padding: 0;
+        }
+
+        .range-value {
+            display: inline-block;
+            margin-left: 10px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            padding: 6px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            font-size: 0.85em;
+        }
+
+        .checkbox-item input {
+            margin-right: 6px;
+        }
+
+        .checkbox-item label {
+            margin: 0;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.05em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 10px;
+            margin-top: 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            line-height: 1.4;
+        }
+
+        .group-config {
+            background: #f0f8f0;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border-left: 4px solid #28a745;
+        }
+
+        .group-config h4 {
+            color: #28a745;
+            font-size: 0.9em;
+            margin-bottom: 8px;
+        }
+
+        .group-config .mini-control {
+            margin-bottom: 8px;
+        }
+
+        .group-config .mini-control label {
+            font-size: 0.75em;
+            display: inline-block;
+            width: 120px;
+        }
+
+        .group-config .mini-control input {
+            width: calc(100% - 130px);
+            padding: 4px 6px;
+            font-size: 0.8em;
+        }
+
+        .group-config .mini-control .mini-value {
+            font-size: 0.75em;
+            font-weight: bold;
+            color: #28a745;
+            margin-left: 5px;
+        }
+
+        .result-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 16px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-card.stratified {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.85em;
+            opacity: 0.9;
+        }
+
+        .plot-container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2em;
+            color: #667eea;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked+.slider {
+            background-color: #28a745;
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(26px);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🦠 EpiRecipe Enhanced Builder</h1>
+            <p>Design and simulate compartmental epidemic models with optional group stratification</p>
+        </div>
+
+        <div class="main-content">
+            <!-- Controls Panel -->
+            <div class="controls-panel">
+                <!-- Group Stratification Toggle -->
+                <div class="section stratified">
+                    <h3>🔬 Group Stratification</h3>
+                    <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                        <label class="toggle-switch" style="margin: 0;">
+                            <input type="checkbox" id="enable_groups" onchange="toggleGroupControls()">
+                            <span class="slider"></span>
+                        </label>
+                        <span style="margin-left: 12px; font-weight: 600; font-size: 0.95em;">Enable Group-Stratified
+                            Modeling</span>
+                    </div>
+                    <div class="info-box">
+                        Model population heterogeneity with multiple groups having different contact patterns and
+                        susceptibility.
+                    </div>
+                </div>
+
+                <!-- Group Configuration (hidden by default) -->
+                <div id="group-controls" class="section stratified hidden">
+                    <h3>👥 Group Configuration</h3>
+
+                    <div class="control-group">
+                        <label>Number of Groups: <span class="range-value" id="num_groups_val">3</span></label>
+                        <input type="range" id="num_groups" min="2" max="6" step="1" value="3"
+                            onchange="updateGroupConfigs()">
+                    </div>
+
+                    <div class="control-group">
+                        <label>Mixing Pattern:</label>
+                        <select id="mixing_type">
+                            <option value="homogeneous">Homogeneous (uniform mixing)</option>
+                            <option value="assortative" selected>Assortative (prefer own group)</option>
+                            <option value="hierarchical">Hierarchical (age-like structure)</option>
+                            <option value="spatial">Spatial (geographic structure)</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group" id="assortativity-control">
+                        <label>Assortativity: <span class="range-value" id="assortativity_val">0.70</span></label>
+                        <input type="range" id="assortativity" min="0" max="1" step="0.05" value="0.70">
+                        <div class="info-box">How much groups prefer within-group contacts (0=random, 1=only own group)
+                        </div>
+                    </div>
+
+                    <div id="groups-container"></div>
+                </div>
+
+                <!-- Compartments Selection -->
+                <div class="section">
+                    <h3>📊 Compartments</h3>
+                    <div class="info-box">
+                        S and I are mandatory.
+                    </div>
+                    <div class="checkbox-grid">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="comp_S" checked disabled>
+                            <label for="comp_S">S (Susceptible)</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="comp_I" checked disabled>
+                            <label for="comp_I">I (Infectious)</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="comp_E">
+                            <label for="comp_E">E (Exposed)</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="comp_R" checked>
+                            <label for="comp_R">R (Recovered)</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="comp_H">
+                            <label for="comp_H">H (Hospitalized)</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="comp_V">
+                            <label for="comp_V">V (Vaccinated)</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="comp_Q">
+                            <label for="comp_Q">Q (Quarantined)</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="comp_D">
+                            <label for="comp_D">D (Deceased)</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Epidemic Parameters -->
+                <div class="section">
+                    <h3>🔬 Epidemic Parameters</h3>
+
+                    <div class="control-group">
+                        <label>R₀: <span class="range-value" id="r0_val">2.5</span></label>
+                        <input type="range" id="r0" min="0.5" max="5.0" step="0.1" value="2.5">
+                    </div>
+
+                    <div class="control-group">
+                        <label>Infectious Period (days): <span class="range-value" id="infectious_val">7</span></label>
+                        <input type="range" id="infectious_period" min="1" max="21" step="1" value="7">
+                    </div>
+
+                    <div class="control-group">
+                        <label>Latent Period (days): <span class="range-value" id="latent_val">5</span></label>
+                        <input type="range" id="latent_period" min="1" max="14" step="1" value="5">
+                    </div>
+                </div>
+
+                <!-- Population Parameters -->
+                <div class="section">
+                    <h3>👥 Population</h3>
+
+                    <div class="control-group">
+                        <label>Population Size:</label>
+                        <input type="number" id="population" value="1000000" min="1000" step="1000">
+                    </div>
+
+                    <div class="control-group">
+                        <label>Initial Infected:</label>
+                        <input type="number" id="initial_infected" value="100" min="1" step="10">
+                    </div>
+
+                    <div class="control-group">
+                        <label>Time Steps (weeks):</label>
+                        <input type="number" id="max_time_steps" value="52" min="10" max="500" step="1">
+                    </div>
+
+                    <div class="control-group">
+                        <label>Noise Level: <span class="range-value" id="noise_val">0.02</span></label>
+                        <input type="range" id="noise_level" min="0" max="0.1" step="0.01" value="0.02">
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <button class="btn btn-primary" onclick="generateModel()">🚀 Generate & Simulate</button>
+                <button class="btn btn-secondary" onclick="randomize()">🎲 Randomize All</button>
+            </div>
+
+            <!-- Visualization Panel -->
+            <div class="viz-panel">
+                <div id="results-container" style="display: none;">
+                    <!-- Statistics -->
+                    <div class="result-stats" id="stats-container"></div>
+
+                    <!-- Plots -->
+                    <div class="plot-container">
+                        <h3 style="color: #667eea; margin-bottom: 15px;">Compartment Dynamics</h3>
+                        <div id="plot-compartments"></div>
+                    </div>
+
+                    <div class="plot-container">
+                        <h3 style="color: #667eea; margin-bottom: 15px;">Effective Reproduction Number (R_t)</h3>
+                        <div id="plot-rt"></div>
+                    </div>
+
+                    <div id="group-plot-container" class="plot-container hidden">
+                        <h3 style="color: #28a745; margin-bottom: 15px;">Group-Specific Infected Trajectories (DEBUG)
+                        </h3>
+                        <div id="plot-groups"></div>
+                    </div>
+                </div>
+
+                <div id="loading-container" style="display: none;">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Generating model and running simulation...</p>
+                    </div>
+                </div>
+
+                <div id="welcome-container">
+                    <div style="text-align: center; padding: 60px 40px; color: #6c757d;">
+                        <h2 style="font-size: 2em; margin-bottom: 20px;">Welcome to EpiRecipe Enhanced</h2>
+                        <p style="font-size: 1.2em; line-height: 1.6; max-width: 600px; margin: 0 auto;">
+                            Configure your epidemic model parameters, optionally enable group stratification, then click
+                            <strong>Generate & Simulate</strong>.
+                        </p>
+                        <div
+                            style="margin-top: 40px; padding: 30px; background: #f8f9fa; border-radius: 8px; max-width: 700px; margin: 40px auto 0;">
+                            <h3 style="color: #667eea; margin-bottom: 15px;">New: Group Stratification</h3>
+                            <ul style="text-align: left; line-height: 2;">
+                                <li>Model heterogeneous populations (age groups, spatial regions)</li>
+                                <li>Configure contact rates, susceptibility, and infectivity per group</li>
+                                <li>Choose mixing patterns (assortative, hierarchical, spatial)</li>
+                                <li>Visualize group-specific trajectories for debugging</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Update range value displays
+        document.querySelectorAll('input[type="range"]').forEach(input => {
+            input.addEventListener('input', function () {
+                const valueSpan = document.getElementById(this.id + '_val');
+                if (valueSpan) {
+                    let value = parseFloat(this.value);
+                    if (value < 1) {
+                        valueSpan.textContent = value.toFixed(3);
+                    } else if (value < 10) {
+                        valueSpan.textContent = value.toFixed(1);
+                    } else {
+                        valueSpan.textContent = Math.round(value);
+                    }
+                }
+            });
+        });
+
+        // Toggle group controls
+        function toggleGroupControls() {
+            const enabled = document.getElementById('enable_groups').checked;
+            const groupControls = document.getElementById('group-controls');
+
+            if (enabled) {
+                groupControls.classList.remove('hidden');
+                updateGroupConfigs();
+            } else {
+                groupControls.classList.add('hidden');
+            }
+        }
+
+        // Update group configurations
+        function updateGroupConfigs() {
+            const numGroups = parseInt(document.getElementById('num_groups').value);
+            const container = document.getElementById('groups-container');
+            const mixingType = document.getElementById('mixing_type').value;
+
+            // Show/hide assortativity control
+            const assortControl = document.getElementById('assortativity-control');
+            assortControl.classList.toggle('hidden', mixingType !== 'assortative');
+
+            container.innerHTML = '';
+
+            const groupNames = ['Children', 'Adults', 'Elderly', 'Youth', 'Seniors', 'Middle-aged'];
+
+            for (let i = 0; i < numGroups; i++) {
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'group-config';
+                groupDiv.innerHTML = `
+                    <h4>Group ${i + 1}: ${groupNames[i] || 'Group ' + (i + 1)}</h4>
+                    <div class="mini-control">
+                        <label>Population:</label>
+                        <input type="number" id="group${i}_pop" value="${Math.round(100 / numGroups)}" min="1" max="100" step="1">
+                        <span class="mini-value" id="group${i}_pop_val">${Math.round(100 / numGroups)}%</span>
+                    </div>
+                    <div class="mini-control">
+                        <label>Contact Rate:</label>
+                        <input type="range" id="group${i}_contact" value="1.0" min="0.3" max="2.0" step="0.1">
+                        <span class="mini-value" id="group${i}_contact_val">1.0x</span>
+                    </div>
+                    <div class="mini-control">
+                        <label>Susceptibility:</label>
+                        <input type="range" id="group${i}_suscept" value="1.0" min="0.5" max="1.5" step="0.1">
+                        <span class="mini-value" id="group${i}_suscept_val">1.0x</span>
+                    </div>
+                    <div class="mini-control">
+                        <label>Infectivity:</label>
+                        <input type="range" id="group${i}_infect" value="1.0" min="0.8" max="1.2" step="0.05">
+                        <span class="mini-value" id="group${i}_infect_val">1.0x</span>
+                    </div>
+                `;
+                container.appendChild(groupDiv);
+
+                // Add event listeners for mini controls
+                ['contact', 'suscept', 'infect'].forEach(param => {
+                    document.getElementById(`group${i}_${param}`).addEventListener('input', function () {
+                        document.getElementById(`group${i}_${param}_val`).textContent = parseFloat(this.value).toFixed(1) + 'x';
+                    });
+                });
+
+                document.getElementById(`group${i}_pop`).addEventListener('input', function () {
+                    document.getElementById(`group${i}_pop_val`).textContent = this.value + '%';
+                });
+            }
+        }
+
+        function getSelectedCompartments() {
+            const compartments = ['S', 'I'];
+            ['E', 'R', 'H', 'V', 'Q', 'D'].forEach(comp => {
+                if (document.getElementById('comp_' + comp).checked) {
+                    compartments.push(comp);
+                }
+            });
+            return compartments;
+        }
+
+        function getGroupConfigs() {
+            const numGroups = parseInt(document.getElementById('num_groups').value);
+            const groups = [];
+
+            for (let i = 0; i < numGroups; i++) {
+                groups.push({
+                    name: `group${i}`,
+                    pop_fraction: parseFloat(document.getElementById(`group${i}_pop`).value) / 100,
+                    contact: parseFloat(document.getElementById(`group${i}_contact`).value),
+                    suscept: parseFloat(document.getElementById(`group${i}_suscept`).value),
+                    infect: parseFloat(document.getElementById(`group${i}_infect`).value)
+                });
+            }
+
+            // Normalize population fractions
+            const total = groups.reduce((sum, g) => sum + g.pop_fraction, 0);
+            groups.forEach(g => g.pop_fraction /= total);
+
+            return groups;
+        }
+
+        function generateModel() {
+            document.getElementById('welcome-container').style.display = 'none';
+            document.getElementById('results-container').style.display = 'none';
+            document.getElementById('loading-container').style.display = 'block';
+
+            const params = {
+                compartments: getSelectedCompartments(),
+                r0: parseFloat(document.getElementById('r0').value),
+                infectious_period: parseInt(document.getElementById('infectious_period').value),
+                latent_period: parseInt(document.getElementById('latent_period').value),
+                population: parseInt(document.getElementById('population').value),
+                initial_infected: parseInt(document.getElementById('initial_infected').value),
+                max_time_steps: parseInt(document.getElementById('max_time_steps').value),
+                noise_level: parseFloat(document.getElementById('noise_level').value),
+                use_groups: document.getElementById('enable_groups').checked
+            };
+
+            if (params.use_groups) {
+                params.groups = getGroupConfigs();
+                params.mixing_type = document.getElementById('mixing_type').value;
+                params.assortativity = parseFloat(document.getElementById('assortativity').value);
+            }
+
+            setTimeout(() => simulateModel(params), 100);
+        }
+
+        function simulateModel(params) {
+            const timeSteps = params.max_time_steps;
+            const gamma = 1.0 / params.infectious_period;
+            const sigma = 1.0 / params.latent_period;
+            const beta = params.r0 * gamma;
+
+            let data;
+
+            if (params.use_groups) {
+                data = simulateStratified(params, beta, gamma, sigma);
+            } else {
+                data = simulateStandard(params, beta, gamma, sigma);
+            }
+
+            renderResults(data, params);
+        }
+
+        function simulateStandard(params, beta, gamma, sigma) {
+            const timeSteps = params.max_time_steps;
+            let S = params.population - params.initial_infected;
+            let I = params.initial_infected;
+            let E = 0, R = 0, H = 0, V = 0, Q = 0, D = 0;
+
+            // Transition rates for additional compartments
+            const kappa = 0.1;  // hospitalization rate
+            const phi = 0.002;  // vaccination rate
+            const psi = 0.15;   // quarantine rate
+            const mu = 0.01;    // death rate from I or H
+            const gamma_H = 0.1; // hospital recovery rate
+            const gamma_Q = 0.14; // quarantine recovery rate
+
+            const data = {
+                time: [], S: [], I: [], E: [], R: [], H: [], V: [], Q: [], D: [], R_t: []
+            };
+
+            for (let t = 0; t <= timeSteps; t++) {
+                const N = S + I + E + R + H + V + Q;
+                data.time.push(t);
+                data.S.push(S);
+                data.I.push(I);
+                if (params.compartments.includes('E')) data.E.push(E);
+                if (params.compartments.includes('R')) data.R.push(R);
+                if (params.compartments.includes('H')) data.H.push(H);
+                if (params.compartments.includes('V')) data.V.push(V);
+                if (params.compartments.includes('Q')) data.Q.push(Q);
+                if (params.compartments.includes('D')) data.D.push(D);
+
+                data.R_t.push(params.r0 * (S / params.population));
+
+                if (t === timeSteps) break;
+
+                const infection = beta * S * I / N;
+                const progression = params.compartments.includes('E') ? sigma * E : 0;
+
+                // Split recovery/outcomes from I
+                let I_to_R = 0, I_to_H = 0, I_to_Q = 0, I_to_D = 0;
+                if (params.compartments.includes('H')) {
+                    I_to_H = kappa * I;
+                }
+                if (params.compartments.includes('Q')) {
+                    I_to_Q = psi * I;
+                }
+                if (params.compartments.includes('D')) {
+                    I_to_D = mu * I;
+                }
+                I_to_R = gamma * I * 0.5; // Reduced base recovery when other compartments exist
+
+                // Vaccination from S
+                const S_to_V = params.compartments.includes('V') ? phi * S : 0;
+
+                // Hospital outcomes
+                const H_to_R = params.compartments.includes('H') ? gamma_H * H : 0;
+                const H_to_D = params.compartments.includes('H') && params.compartments.includes('D') ? mu * 0.5 * H : 0;
+
+                // Quarantine to R
+                const Q_to_R = params.compartments.includes('Q') ? gamma_Q * Q : 0;
+
+                // Apply transitions
+                S -= infection + S_to_V;
+                if (params.compartments.includes('E')) {
+                    E += infection - progression;
+                    I += progression - I_to_R - I_to_H - I_to_Q - I_to_D;
+                } else {
+                    I += infection - I_to_R - I_to_H - I_to_Q - I_to_D;
+                }
+
+                if (params.compartments.includes('R')) {
+                    R += I_to_R + H_to_R + Q_to_R;
+                }
+                if (params.compartments.includes('H')) {
+                    H += I_to_H - H_to_R - H_to_D;
+                }
+                if (params.compartments.includes('V')) {
+                    V += S_to_V;
+                }
+                if (params.compartments.includes('Q')) {
+                    Q += I_to_Q - Q_to_R;
+                }
+                if (params.compartments.includes('D')) {
+                    D += I_to_D + H_to_D;
+                }
+
+                if (params.noise_level > 0) {
+                    I += (Math.random() - 0.5) * params.noise_level * I;
+                }
+
+                S = Math.max(0, S);
+                I = Math.max(0, I);
+                E = Math.max(0, E);
+                R = Math.max(0, R);
+                H = Math.max(0, H);
+                V = Math.max(0, V);
+                Q = Math.max(0, Q);
+                D = Math.max(0, D);
+            }
+
+            return data;
+        }
+
+        function simulateStratified(params, beta, gamma, sigma) {
+            const timeSteps = params.max_time_steps;
+            const numGroups = params.groups.length;
+
+            // Initialize group-specific compartments
+            const S_groups = params.groups.map(g => (params.population * g.pop_fraction) - (params.initial_infected * g.pop_fraction));
+            const I_groups = params.groups.map(g => params.initial_infected * g.pop_fraction);
+            const E_groups = params.groups.map(() => 0);
+            const R_groups = params.groups.map(() => 0);
+            const H_groups = params.groups.map(() => 0);
+            const V_groups = params.groups.map(() => 0);
+            const Q_groups = params.groups.map(() => 0);
+            const D_groups = params.groups.map(() => 0);
+
+            // Transition rates for additional compartments
+            const kappa = 0.1;  // hospitalization rate
+            const phi = 0.002;  // vaccination rate
+            const psi = 0.15;   // quarantine rate
+            const mu = 0.01;    // death rate from I or H
+            const gamma_H = 0.1; // hospital recovery rate
+            const gamma_Q = 0.14; // quarantine recovery rate
+
+            // Generate mixing matrix
+            const mixingMatrix = generateMixingMatrix(numGroups, params.mixing_type, params.assortativity || 0.7);
+
+            const data = {
+                time: [],
+                S: [], I: [], E: [], R: [], H: [], V: [], Q: [], D: [],
+                R_t: [],
+                groups: {
+                    I: Array.from({ length: numGroups }, () => [])
+                }
+            };
+
+            for (let t = 0; t <= timeSteps; t++) {
+                // Aggregate
+                const S_total = S_groups.reduce((a, b) => a + b, 0);
+                const I_total = I_groups.reduce((a, b) => a + b, 0);
+                const E_total = E_groups.reduce((a, b) => a + b, 0);
+                const R_total = R_groups.reduce((a, b) => a + b, 0);
+                const H_total = H_groups.reduce((a, b) => a + b, 0);
+                const V_total = V_groups.reduce((a, b) => a + b, 0);
+                const Q_total = Q_groups.reduce((a, b) => a + b, 0);
+                const D_total = D_groups.reduce((a, b) => a + b, 0);
+                const N_total = params.population;
+
+                data.time.push(t);
+                data.S.push(S_total);
+                data.I.push(I_total);
+                if (params.compartments.includes('E')) data.E.push(E_total);
+                if (params.compartments.includes('R')) data.R.push(R_total);
+                if (params.compartments.includes('H')) data.H.push(H_total);
+                if (params.compartments.includes('V')) data.V.push(V_total);
+                if (params.compartments.includes('Q')) data.Q.push(Q_total);
+                if (params.compartments.includes('D')) data.D.push(D_total);
+
+                // Store group-specific I
+                I_groups.forEach((I_g, g) => {
+                    data.groups.I[g].push(I_g);
+                });
+
+                // Calculate R_t (population-weighted)
+                const R_t = params.r0 * (S_total / params.population);
+                data.R_t.push(R_t);
+
+                if (t === timeSteps) break;
+
+                // Update each group
+                for (let i = 0; i < numGroups; i++) {
+                    const group = params.groups[i];
+                    const N_i = params.population * group.pop_fraction;
+
+                    // Force of infection from all groups (with mixing)
+                    let foi = 0;
+                    for (let j = 0; j < numGroups; j++) {
+                        foi += mixingMatrix[i][j] * beta * group.contact * group.suscept * I_groups[j] / N_total;
+                    }
+
+                    const infection = foi * S_groups[i];
+                    const progression = params.compartments.includes('E') ? sigma * E_groups[i] : 0;
+
+                    // Split recovery/outcomes from I
+                    let I_to_R = 0, I_to_H = 0, I_to_Q = 0, I_to_D = 0;
+                    if (params.compartments.includes('H')) {
+                        I_to_H = kappa * I_groups[i];
+                    }
+                    if (params.compartments.includes('Q')) {
+                        I_to_Q = psi * I_groups[i];
+                    }
+                    if (params.compartments.includes('D')) {
+                        I_to_D = mu * I_groups[i];
+                    }
+                    I_to_R = gamma * I_groups[i] * 0.5;
+
+                    // Vaccination from S
+                    const S_to_V = params.compartments.includes('V') ? phi * S_groups[i] : 0;
+
+                    // Hospital outcomes
+                    const H_to_R = params.compartments.includes('H') ? gamma_H * H_groups[i] : 0;
+                    const H_to_D = params.compartments.includes('H') && params.compartments.includes('D') ? mu * 0.5 * H_groups[i] : 0;
+
+                    // Quarantine to R
+                    const Q_to_R = params.compartments.includes('Q') ? gamma_Q * Q_groups[i] : 0;
+
+                    // Apply transitions
+                    S_groups[i] -= infection + S_to_V;
+                    if (params.compartments.includes('E')) {
+                        E_groups[i] += infection - progression;
+                        I_groups[i] += progression - I_to_R - I_to_H - I_to_Q - I_to_D;
+                    } else {
+                        I_groups[i] += infection - I_to_R - I_to_H - I_to_Q - I_to_D;
+                    }
+
+                    if (params.compartments.includes('R')) {
+                        R_groups[i] += I_to_R + H_to_R + Q_to_R;
+                    }
+                    if (params.compartments.includes('H')) {
+                        H_groups[i] += I_to_H - H_to_R - H_to_D;
+                    }
+                    if (params.compartments.includes('V')) {
+                        V_groups[i] += S_to_V;
+                    }
+                    if (params.compartments.includes('Q')) {
+                        Q_groups[i] += I_to_Q - Q_to_R;
+                    }
+                    if (params.compartments.includes('D')) {
+                        D_groups[i] += I_to_D + H_to_D;
+                    }
+
+                    if (params.noise_level > 0) {
+                        I_groups[i] += (Math.random() - 0.5) * params.noise_level * I_groups[i];
+                    }
+
+                    S_groups[i] = Math.max(0, S_groups[i]);
+                    I_groups[i] = Math.max(0, I_groups[i]);
+                    E_groups[i] = Math.max(0, E_groups[i]);
+                    R_groups[i] = Math.max(0, R_groups[i]);
+                    H_groups[i] = Math.max(0, H_groups[i]);
+                    V_groups[i] = Math.max(0, V_groups[i]);
+                    Q_groups[i] = Math.max(0, Q_groups[i]);
+                    D_groups[i] = Math.max(0, D_groups[i]);
+                }
+            }
+
+            return data;
+        }
+
+        function generateMixingMatrix(n, type, assortativity) {
+            const matrix = [];
+
+            for (let i = 0; i < n; i++) {
+                matrix[i] = [];
+                for (let j = 0; j < n; j++) {
+                    if (type === 'homogeneous') {
+                        matrix[i][j] = 1.0 / n;
+                    } else if (type === 'assortative') {
+                        if (i === j) {
+                            matrix[i][j] = assortativity;
+                        } else {
+                            matrix[i][j] = (1 - assortativity) / (n - 1);
+                        }
+                    } else if (type === 'hierarchical') {
+                        const dist = Math.abs(i - j);
+                        matrix[i][j] = Math.exp(-dist * 0.8);
+                    } else if (type === 'spatial') {
+                        const dist = Math.abs(i - j);
+                        matrix[i][j] = dist <= 1 ? 0.5 : 0.1;
+                    }
+                }
+                // Normalize
+                const sum = matrix[i].reduce((a, b) => a + b, 0);
+                matrix[i] = matrix[i].map(v => v / sum);
+            }
+
+            return matrix;
+        }
+
+        function renderResults(data, params) {
+            // Update statistics
+            const peakI = Math.max(...data.I);
+            const finalRt = data.R_t[data.R_t.length - 1];
+
+            let statsHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${Math.round(peakI).toLocaleString()}</div>
+                    <div class="stat-label">Peak Infections</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${finalRt.toFixed(2)}</div>
+                    <div class="stat-label">Final R(t)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${params.max_time_steps}</div>
+                    <div class="stat-label">Duration (weeks)</div>
+                </div>
+            `;
+
+            if (params.use_groups) {
+                const numGroups = params.groups.length;
+                statsHTML += `
+                    <div class="stat-card stratified">
+                        <div class="stat-value">${numGroups}</div>
+                        <div class="stat-label">Groups</div>
+                    </div>
+                    <div class="stat-card stratified">
+                        <div class="stat-value">${params.mixing_type}</div>
+                        <div class="stat-label">Mixing</div>
+                    </div>
+                `;
+            }
+
+            document.getElementById('stats-container').innerHTML = statsHTML;
+
+            // Plot compartments
+            const traces = [];
+            params.compartments.forEach(comp => {
+                if (data[comp] && data[comp].length > 0) {
+                    traces.push({
+                        x: data.time,
+                        y: data[comp],
+                        name: comp,
+                        type: 'scatter',
+                        mode: 'lines',
+                        line: { width: 2 }
+                    });
+                }
+            });
+
+            Plotly.newPlot('plot-compartments', traces, {
+                xaxis: { title: 'Week' },
+                yaxis: { title: 'Population' },
+                hovermode: 'x unified',
+                showlegend: true,
+                height: 400
+            }, { responsive: true });
+
+            // Plot R_t
+            Plotly.newPlot('plot-rt', [
+                {
+                    x: data.time,
+                    y: data.R_t,
+                    name: 'R(t)',
+                    type: 'scatter',
+                    mode: 'lines',
+                    line: { width: 3, color: '#e74c3c' }
+                },
+                {
+                    x: data.time,
+                    y: Array(data.time.length).fill(1),
+                    name: 'R=1 threshold',
+                    type: 'scatter',
+                    mode: 'lines',
+                    line: { width: 2, dash: 'dash', color: '#95a5a6' }
+                }
+            ], {
+                xaxis: { title: 'Week' },
+                yaxis: { title: 'Effective Reproduction Number' },
+                hovermode: 'x unified',
+                showlegend: true,
+                height: 300
+            }, { responsive: true });
+
+            // Plot group-specific if applicable
+            if (params.use_groups && data.groups) {
+                const groupTraces = [];
+                const colors = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c'];
+
+                data.groups.I.forEach((I_group, i) => {
+                    groupTraces.push({
+                        x: data.time,
+                        y: I_group,
+                        name: `Group ${i + 1}`,
+                        type: 'scatter',
+                        mode: 'lines',
+                        line: { width: 2.5, color: colors[i % colors.length] }
+                    });
+                });
+
+                Plotly.newPlot('plot-groups', groupTraces, {
+                    xaxis: { title: 'Week' },
+                    yaxis: { title: 'Infected Population' },
+                    hovermode: 'x unified',
+                    showlegend: true,
+                    height: 350
+                }, { responsive: true });
+
+                document.getElementById('group-plot-container').classList.remove('hidden');
+            } else {
+                document.getElementById('group-plot-container').classList.add('hidden');
+            }
+
+            // Show results
+            document.getElementById('loading-container').style.display = 'none';
+            document.getElementById('results-container').style.display = 'block';
+        }
+
+        function randomize() {
+            // Random compartments
+            ['E', 'R', 'H', 'V', 'Q', 'D'].forEach(comp => {
+                document.getElementById('comp_' + comp).checked = Math.random() > 0.5;
+            });
+
+            // Random parameters
+            document.getElementById('r0').value = (Math.random() * 4 + 1).toFixed(1);
+            document.getElementById('infectious_period').value = Math.floor(Math.random() * 15 + 3);
+            document.getElementById('latent_period').value = Math.floor(Math.random() * 10 + 2);
+            document.getElementById('noise_level').value = (Math.random() * 0.08).toFixed(2);
+
+            // Random groups
+            if (Math.random() > 0.5) {
+                document.getElementById('enable_groups').checked = true;
+                toggleGroupControls();
+
+                const numGroups = Math.floor(Math.random() * 4) + 2;
+                document.getElementById('num_groups').value = numGroups;
+                updateGroupConfigs();
+
+                // Randomize group parameters
+                for (let i = 0; i < numGroups; i++) {
+                    document.getElementById(`group${i}_contact`).value = (Math.random() * 1.5 + 0.4).toFixed(1);
+                    document.getElementById(`group${i}_suscept`).value = (Math.random() * 0.8 + 0.6).toFixed(1);
+                    document.getElementById(`group${i}_infect`).value = (Math.random() * 0.3 + 0.85).toFixed(2);
+
+                    document.getElementById(`group${i}_contact`).dispatchEvent(new Event('input'));
+                    document.getElementById(`group${i}_suscept`).dispatchEvent(new Event('input'));
+                    document.getElementById(`group${i}_infect`).dispatchEvent(new Event('input'));
+                }
+            }
+
+            // Update displays
+            document.querySelectorAll('input[type="range"]').forEach(input => {
+                input.dispatchEvent(new Event('input'));
+            });
+        }
+
+        // Initialize
+        document.getElementById('mixing_type').addEventListener('change', updateGroupConfigs);
+    </script>
+</body>
+
+</html>

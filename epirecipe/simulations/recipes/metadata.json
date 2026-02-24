@@ -1,0 +1,410 @@
+{
+  "recipes": [
+    {
+      "id": "recipe_0000",
+      "csv_weekly": "/home/ubuntu/zw/CAPE_new/epirecipe/simulations/recipes/recipe_0000_weekly.csv",
+      "csv_daily": "/home/ubuntu/zw/CAPE_new/epirecipe/simulations/recipes/recipe_0000_daily.csv",
+      "compartments": [
+        "S",
+        "I",
+        "Q",
+        "R"
+      ],
+      "num_compartments": 4,
+      "transitions": [
+        {
+          "source": "S",
+          "target": "I",
+          "category": "infection",
+          "rule": "standard_mixing"
+        },
+        {
+          "source": "I",
+          "target": "R",
+          "category": "recovery",
+          "rule": "constant_recovery"
+        },
+        {
+          "source": "I",
+          "target": "Q",
+          "category": "intervention",
+          "rule": "reactive_quarantine"
+        }
+      ],
+      "num_transitions": 3,
+      "noise_level": 0.005101836064978932,
+      "params": {
+        "R0": 1.88232812817589,
+        "population": 1107.7585668673732,
+        "initial_infected": 5.0,
+        "gamma": 0.25,
+        "sigma": 0.5,
+        "beta": 0.4705820320439725
+      },
+      "stratified": false
+    },
+    {
+      "id": "recipe_0001_g2",
+      "csv_weekly": "/home/ubuntu/zw/CAPE_new/epirecipe/simulations/recipes/recipe_0001_g2_weekly.csv",
+      "csv_daily": "/home/ubuntu/zw/CAPE_new/epirecipe/simulations/recipes/recipe_0001_g2_daily.csv",
+      "compartments": [
+        "S",
+        "I",
+        "D"
+      ],
+      "num_compartments": 3,
+      "transitions": [
+        {
+          "source": "S",
+          "target": "I",
+          "category": "infection",
+          "rule": "power_law_mixing"
+        }
+      ],
+      "num_transitions": 1,
+      "noise_level": 0.04450492852684512,
+      "params": {
+        "R0": 11.351342945239406,
+        "population": 2871.837284726375,
+        "initial_infected": 5.0,
+        "beta": 2.8378357363098514,
+        "gamma": 0.25,
+        "sigma": 0.5
+      },
+      "stratified": true,
+      "group_stratified": {
+        "num_groups": 2,
+        "mixing_type": "hierarchical",
+        "group_names": [
+          "group_0",
+          "group_1"
+        ],
+        "group_fractions": [
+          0.18837478945441755,
+          0.8116252105455825
+        ],
+        "group_contact_rates": [
+          1.8412335629470733,
+          1.1107697557735956
+        ],
+        "group_susceptibilities": [
+          0.9334412152239713,
+          1.0754341413845876
+        ],
+        "group_infectivities": [
+          0.9722550349635126,
+          0.8146973364615284
+        ],
+        "R0_dominant_eigenvalue": 16.247252249557803,
+        "metadata_file": "/home/ubuntu/zw/CAPE_new/epirecipe/simulations/recipes/recipe_0001_g2_metadata.json"
+      }
+    },
+    {
+      "id": "recipe_0002_g3",
+      "csv_weekly": "/home/ubuntu/zw/CAPE_new/epirecipe/simulations/recipes/recipe_0002_g3_weekly.csv",
+      "csv_daily": "/home/ubuntu/zw/CAPE_new/epirecipe/simulations/recipes/recipe_0002_g3_daily.csv",
+      "compartments": [
+        "S",
+        "I",
+        "P",
+        "D",
+        "E",
+        "R",
+        "Q",
+        "W",
+        "H",
+        "A"
+      ],
+      "num_compartments": 10,
+      "transitions": [
+        {
+          "source": "S",
+          "target": "E",
+          "category": "infection",
+          "rule": "fomite_surface"
+        },
+        {
+          "source": "E",
+          "target": "I",
+          "category": "progression",
+          "rule": "simple_linear"
+        },
+        {
+          "source": "I",
+          "target": "H",
+          "category": "progression",
+          "rule": "severity_trigger"
+        },
+        {
+          "source": "I",
+          "target": "R",
+          "category": "recovery",
+          "rule": "constant_recovery"
+        },
+        {
+          "source": "I",
+          "target": "Q",
+          "category": "intervention",
+          "rule": "reactive_quarantine"
+        },
+        {
+          "source": "P",
+          "target": "S",
+          "category": "intervention",
+          "rule": "prophylaxis_decay"
+        },
+        {
+          "source": "I,A",
+          "target": "W",
+          "category": "reservoir",
+          "rule": "asymptomatic_shedding"
+        },
+        {
+          "source": "W",
+          "target": "W",
+          "category": "reservoir",
+          "rule": "environmental_decay"
+        },
+        {
+          "source": "S",
+          "target": "S,I,R,E,A",
+          "category": "demography",
+          "rule": "birth_import"
+        }
+      ],
+      "num_transitions": 9,
+      "noise_level": 0.016741527026173316,
+      "params": {
+        "R0": 17.863282137501688,
+        "population": 2500.2496406708333,
+        "initial_infected": 5.0,
+        "gamma": 0.25,
+        "sigma": 0.5,
+        "beta": 4.107842042402774
+      },
+      "stratified": true,
+      "group_stratified": {
+        "num_groups": 3,
+        "mixing_type": "spatial",
+        "group_names": [
+          "group_0",
+          "group_1",
+          "group_2"
+        ],
+        "group_fractions": [
+          0.36216514227573837,
+          0.43649769323276777,
+          0.20133716449149386
+        ],
+        "group_contact_rates": [
+          0.35413022145987316,
+          1.8531980501691903,
+          0.8727574597459005
+        ],
+        "group_susceptibilities": [
+          1.3033385374870976,
+          1.2264593259208634,
+          1.0129546456570422
+        ],
+        "group_infectivities": [
+          0.8725859663660164,
+          0.8680507550683634,
+          0.8293163112494747
+        ],
+        "R0_dominant_eigenvalue": 24.191756331588472,
+        "metadata_file": "/home/ubuntu/zw/CAPE_new/epirecipe/simulations/recipes/recipe_0002_g3_metadata.json"
+      }
+    },
+    {
+      "id": "recipe_0003_g4",
+      "csv_weekly": "/home/ubuntu/zw/CAPE_new/epirecipe/simulations/recipes/recipe_0003_g4_weekly.csv",
+      "csv_daily": "/home/ubuntu/zw/CAPE_new/epirecipe/simulations/recipes/recipe_0003_g4_daily.csv",
+      "compartments": [
+        "S",
+        "I",
+        "D",
+        "H",
+        "C",
+        "Q",
+        "E",
+        "R"
+      ],
+      "num_compartments": 8,
+      "transitions": [
+        {
+          "source": "S",
+          "target": "E",
+          "category": "infection",
+          "rule": "power_law_mixing"
+        },
+        {
+          "source": "E",
+          "target": "I",
+          "category": "progression",
+          "rule": "simple_linear"
+        },
+        {
+          "source": "I",
+          "target": "H",
+          "category": "progression",
+          "rule": "severity_trigger"
+        },
+        {
+          "source": "I",
+          "target": "C",
+          "category": "progression",
+          "rule": "chronic_failure"
+        },
+        {
+          "source": "I",
+          "target": "D",
+          "category": "progression",
+          "rule": "disease_induced_death"
+        },
+        {
+          "source": "H",
+          "target": "D",
+          "category": "progression",
+          "rule": "hospital_death"
+        },
+        {
+          "source": "I",
+          "target": "R",
+          "category": "recovery",
+          "rule": "constant_recovery"
+        },
+        {
+          "source": "H",
+          "target": "R",
+          "category": "recovery",
+          "rule": "resource_constraints"
+        },
+        {
+          "source": "C",
+          "target": "R",
+          "category": "recovery",
+          "rule": "carrier_clearance"
+        }
+      ],
+      "num_transitions": 9,
+      "noise_level": 0.04455328989431587,
+      "params": {
+        "R0": 8.293149139351065,
+        "population": 3984.4566928383792,
+        "initial_infected": 5.0,
+        "beta": 2.0732872848377664,
+        "gamma": 0.25,
+        "sigma": 0.5
+      },
+      "stratified": true,
+      "group_stratified": {
+        "num_groups": 4,
+        "mixing_type": "spatial",
+        "group_names": [
+          "group_0",
+          "group_1",
+          "group_2",
+          "group_3"
+        ],
+        "group_fractions": [
+          0.7787802540861145,
+          0.15227056499981784,
+          0.06058914734854583,
+          0.008360033565521827
+        ],
+        "group_contact_rates": [
+          1.802596234808913,
+          0.9325863528020188,
+          0.39717066279580426,
+          0.5484366972247332
+        ],
+        "group_susceptibilities": [
+          1.035230255509892,
+          0.8879707499987721,
+          1.11495689980512,
+          1.2247453735616889
+        ],
+        "group_infectivities": [
+          1.0870871629408643,
+          0.8313505912564901,
+          1.0150145510022752,
+          1.1663292774295653
+        ],
+        "R0_dominant_eigenvalue": 11.82101653035026,
+        "metadata_file": "/home/ubuntu/zw/CAPE_new/epirecipe/simulations/recipes/recipe_0003_g4_metadata.json"
+      }
+    },
+    {
+      "id": "recipe_0004_g4",
+      "csv_weekly": "/home/ubuntu/zw/CAPE_new/epirecipe/simulations/recipes/recipe_0004_g4_weekly.csv",
+      "csv_daily": "/home/ubuntu/zw/CAPE_new/epirecipe/simulations/recipes/recipe_0004_g4_daily.csv",
+      "compartments": [
+        "S",
+        "I",
+        "P"
+      ],
+      "num_compartments": 3,
+      "transitions": [
+        {
+          "source": "S",
+          "target": "I",
+          "category": "infection",
+          "rule": "standard_mixing"
+        },
+        {
+          "source": "P",
+          "target": "S",
+          "category": "intervention",
+          "rule": "prophylaxis_decay"
+        }
+      ],
+      "num_transitions": 2,
+      "noise_level": 0.047884165744836366,
+      "params": {
+        "R0": 16.724302702723485,
+        "population": 3243.8789893427665,
+        "initial_infected": 5.0,
+        "gamma": 0.25,
+        "sigma": 0.5,
+        "beta": 2.389186100389069
+      },
+      "stratified": true,
+      "group_stratified": {
+        "num_groups": 4,
+        "mixing_type": "hierarchical",
+        "group_names": [
+          "group_0",
+          "group_1",
+          "group_2",
+          "group_3"
+        ],
+        "group_fractions": [
+          0.26164961874164655,
+          0.16548993691884195,
+          0.42313772007280703,
+          0.1497227242667044
+        ],
+        "group_contact_rates": [
+          1.3201731885891255,
+          1.8138667067537682,
+          1.1368877995159665,
+          1.5133975261131
+        ],
+        "group_susceptibilities": [
+          0.7669927319356455,
+          1.4483650120150053,
+          1.0186848984775212,
+          1.3625805591222295
+        ],
+        "group_infectivities": [
+          1.0218138829996646,
+          0.8541783952298166,
+          0.8112898357416741,
+          1.1468606724921464
+        ],
+        "R0_dominant_eigenvalue": 30.79372140913822,
+        "metadata_file": "/home/ubuntu/zw/CAPE_new/epirecipe/simulations/recipes/recipe_0004_g4_metadata.json"
+      }
+    }
+  ]
+}

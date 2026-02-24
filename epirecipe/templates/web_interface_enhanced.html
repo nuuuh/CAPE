@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EpiRecipe Interactive Builder - Using Real Pipeline</title>
+    <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 450px 1fr;
+            gap: 0;
+            min-height: 800px;
+        }
+
+        .controls-panel {
+            background: #f8f9fa;
+            padding: 25px;
+            border-right: 2px solid #dee2e6;
+            overflow-y: auto;
+            max-height: calc(100vh - 180px);
+        }
+
+        .viz-panel {
+            padding: 25px;
+            overflow-y: auto;
+            max-height: calc(100vh - 180px);
+        }
+
+        .section {
+            margin-bottom: 20px;
+            background: white;
+            padding: 18px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .section h3 {
+            color: #667eea;
+            margin-bottom: 12px;
+            font-size: 1.1em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 6px;
+        }
+
+        .section.stratified h3 {
+            color: #28a745;
+            border-bottom-color: #28a745;
+        }
+
+        .control-group {
+            margin-bottom: 12px;
+        }
+
+        .control-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #495057;
+            font-size: 0.85em;
+        }
+
+        .control-group input[type="number"],
+        .control-group input[type="range"],
+        .control-group select {
+            width: 100%;
+            padding: 8px;
+            border: 2px solid #dee2e6;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        .control-group input[type="range"] {
+            padding: 0;
+        }
+
+        .range-value {
+            display: inline-block;
+            margin-left: 10px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            padding: 6px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            font-size: 0.85em;
+        }
+
+        .checkbox-item input {
+            margin-right: 6px;
+        }
+
+        .checkbox-item label {
+            margin: 0;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.05em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 10px;
+            margin-top: 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            line-height: 1.4;
+        }
+
+        .info-box.success {
+            background: #d4edda;
+            border-left-color: #28a745;
+            color: #155724;
+        }
+
+        .info-box.error {
+            background: #f8d7da;
+            border-left-color: #dc3545;
+            color: #721c24;
+        }
+
+        .group-config {
+            background: #f0f8f0;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border-left: 4px solid #28a745;
+        }
+
+        .group-config h4 {
+            color: #28a745;
+            font-size: 0.9em;
+            margin-bottom: 8px;
+        }
+
+        .group-config .mini-control {
+            margin-bottom: 8px;
+        }
+
+        .group-config .mini-control label {
+            font-size: 0.75em;
+            display: inline-block;
+            width: 120px;
+        }
+
+        .group-config .mini-control input {
+            width: calc(100% - 130px);
+            padding: 4px 6px;
+            font-size: 0.8em;
+        }
+
+        .group-config .mini-control .mini-value {
+            font-size: 0.75em;
+            font-weight: bold;
+            color: #28a745;
+            margin-left: 5px;
+        }
+
+        .result-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 16px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-card.stratified {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.85em;
+            opacity: 0.9;
+        }
+
+        .plot-container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2em;
+            color: #667eea;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked+.slider {
+            background-color: #28a745;
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(26px);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            background: #667eea;
+            color: white;
+            border-radius: 4px;
+            font-size: 0.75em;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🦠 EpiRecipe Pipeline Builder</h1>
+            <p>Design and simulate compartmental epidemic models using the real Python pipeline <span
+                    class="badge">LIVE</span></p>
+        </div>
+
+        <div class="main-content">
+            <!-- Controls Panel -->
+            <div class="controls-panel">
+                <div class="info-box success">
+                    ✓ Connected to Python pipeline.py backend
+                </div>
+
+                <!-- Group Stratification Toggle -->
+                <div class="section stratified">
+                    <h3>🔬 Group Stratification</h3>
+                    <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                        <label class="toggle-switch" style="margin: 0;">
+                            <input type="checkbox" id="enable_groups" onchange="toggleGroupControls()">
+                            <span class="slider"></span>
+                        </label>
+                        <span style="margin-left: 12px; font-weight: 600; font-size: 0.95em;">Enable Group-Stratified
+                            Modeling</span>
+                    </div>
+                    <div class="info-box">
+                        Model population heterogeneity with multiple groups having different contact patterns and
+                        susceptibility.
+                    </div>
+                </div>
+
+                <!-- Group Configuration (hidden by default) -->
+                <div id="group-controls" class="section stratified hidden">
+                    <h3>👥 Group Configuration</h3>
+
+                    <div class="control-group">
+                        <label>Number of Groups: <span class="range-value" id="num_groups_val">3</span></label>
+                        <input type="range" id="num_groups" min="2" max="6" step="1" value="3"
+                            onchange="updateGroupConfigs()">
+                    </div>
+
+                    <div class="control-group">
+                        <label>Mixing Pattern:</label>
+                        <select id="mixing_type">
+                            <option value="homogeneous">Homogeneous (uniform mixing)</option>
+                            <option value="assortative" selected>Assortative (prefer own group)</option>
+                            <option value="hierarchical">Hierarchical (age-like structure)</option>
+                            <option value="spatial">Spatial (geographic structure)</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group" id="assortativity-control">
+                        <label>Assortativity: <span class="range-value" id="assortativity_val">0.70</span></label>
+                        <input type="range" id="assortativity" min="0" max="1" step="0.05" value="0.70">
+                        <div class="info-box">How much groups prefer within-group contacts (0=random, 1=only own group)
+                        </div>
+                    </div>
+
+                    <div id="groups-container"></div>
+                </div>
+
+                <!-- Compartments Selection -->
+                <div class="section">
+                    <h3>📊 Compartments</h3>
+                    <div class="info-box">
+                        S and I are mandatory.
+                    </div>
+                    <div class="checkbox-grid">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="comp_S" checked disabled>
+                            <label for="comp_S">S (Susceptible)</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="comp_I" checked disabled>
+                            <label for="comp_I">I (Infectious)</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="comp_E">
+                            <label for="comp_E">E (Exposed)</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="comp_R" checked>
+                            <label for="comp_R">R (Recovered)</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="comp_H">
+                            <label for="comp_H">H (Hospitalized)</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="comp_V">
+                            <label for="comp_V">V (Vaccinated)</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="comp_Q">
+                            <label for="comp_Q">Q (Quarantined)</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="comp_D">
+                            <label for="comp_D">D (Deceased)</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Epidemic Parameters -->
+                <div class="section">
+                    <h3>🔬 Epidemic Parameters</h3>
+
+                    <div class="control-group">
+                        <label>R₀: <span class="range-value" id="r0_val">2.5</span></label>
+                        <input type="range" id="r0" min="0.5" max="5.0" step="0.1" value="2.5">
+                    </div>
+
+                    <div class="control-group">
+                        <label>Infectious Period (days): <span class="range-value" id="infectious_val">7</span></label>
+                        <input type="range" id="infectious_period" min="1" max="21" step="1" value="7">
+                    </div>
+
+                    <div class="control-group">
+                        <label>Latent Period (days): <span class="range-value" id="latent_val">5</span></label>
+                        <input type="range" id="latent_period" min="1" max="14" step="1" value="5">
+                    </div>
+                </div>
+
+                <!-- Population Parameters -->
+                <div class="section">
+                    <h3>👥 Population</h3>
+
+                    <div class="control-group">
+                        <label>Population Size:</label>
+                        <input type="number" id="population" value="1000000" min="1000" step="1000">
+                    </div>
+
+                    <div class="control-group">
+                        <label>Time Unit:</label>
+                        <select id="time_unit">
+                            <option value="weeks" selected>Weeks</option>
+                            <option value="days">Days</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group">
+                        <label>Initial Infected:</label>
+                        <input type="number" id="initial_infected" value="100" min="1" step="10">
+                    </div>
+
+                    <div class="control-group">
+                        <label>Time Steps (<span id="time_unit_steps_label">weeks</span>):</label>
+                        <input type="number" id="max_time_steps" value="52" min="10" max="500" step="1">
+                    </div>
+
+                    <div class="control-group">
+                        <label>Noise Level: <span class="range-value" id="noise_val">0.02</span></label>
+                        <input type="range" id="noise_level" min="0" max="0.1" step="0.01" value="0.02">
+                    </div>
+                </div>
+
+                <!-- Seasonal Forcing Toggle -->
+                <div class="section" style="border-left: 4px solid #f39c12;">
+                    <h3>🌊 Seasonal Forcing</h3>
+                    <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                        <label class="toggle-switch" style="margin: 0;">
+                            <input type="checkbox" id="enable_seasonal" onchange="toggleSeasonalControls()">
+                            <span class="slider"></span>
+                        </label>
+                        <span style="margin-left: 12px; font-weight: 600; font-size: 0.95em;">Enable Seasonal
+                            Forcing</span>
+                    </div>
+                    <div class="info-box">
+                        Add periodic variation to transmission rate: β(t) = β₀ × (1 + ε × cos(2πt/T + φ))
+                    </div>
+                </div>
+
+                <!-- Seasonal Forcing Configuration (hidden by default) -->
+                <div id="seasonal-controls" class="section hidden" style="border-left: 4px solid #f39c12;">
+                    <h3>⚙️ Seasonal Parameters</h3>
+
+                    <div class="control-group">
+                        <label>Amplitude (ε): <span class="range-value" id="seasonal_amplitude_val">0.30</span></label>
+                        <input type="range" id="seasonal_amplitude" min="0.05" max="0.5" step="0.05" value="0.30">
+                        <div class="info-box">Strength of seasonal variation (0.1 = weak, 0.5 = strong)</div>
+                    </div>
+
+                    <div class="control-group">
+                        <label>Period (T): <span class="range-value" id="seasonal_period_val">52</span> weeks</label>
+                        <select id="seasonal_period">
+                            <option value="26">26 weeks (semi-annual)</option>
+                            <option value="52" selected>52 weeks (annual)</option>
+                            <option value="104">104 weeks (biennial)</option>
+                            <option value="156">156 weeks (triennial)</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group">
+                        <label>Phase (φ): <span class="range-value" id="seasonal_phase_val">0</span> rad</label>
+                        <input type="range" id="seasonal_phase" min="0" max="6.28" step="0.31" value="0">
+                        <div class="info-box">Phase offset for seasonal peak timing</div>
+                    </div>
+                </div>
+
+                <!-- GP Generation Section -->
+                <div class="section" style="border-left: 4px solid #9b59b6;">
+                    <h3>📈 GP Sample Generation</h3>
+                    <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                        <label class="toggle-switch" style="margin: 0;">
+                            <input type="checkbox" id="enable_gp" onchange="toggleGPControls()">
+                            <span class="slider"></span>
+                        </label>
+                        <span style="margin-left: 12px; font-weight: 600; font-size: 0.95em;">Generate GP Sample</span>
+                    </div>
+                    <div class="info-box">
+                        Generate a Gaussian Process sample using epidemic-relevant kernels (Periodic, RBF, Linear,
+                        RationalQuadratic).
+                    </div>
+                </div>
+
+                <!-- GP Configuration (hidden by default) -->
+                <div id="gp-controls" class="section hidden" style="border-left: 4px solid #9b59b6;">
+                    <h3>⚙️ GP Parameters</h3>
+
+                    <div class="control-group">
+                        <label>Kernel Type:</label>
+                        <select id="gp_kernel">
+                            <option value="random" selected>Random (auto-select)</option>
+                            <option value="periodic">Periodic (seasonal patterns)</option>
+                            <option value="rbf">RBF (smooth outbreak shapes)</option>
+                            <option value="linear">Linear (trends)</option>
+                            <option value="rational_quadratic">Rational Quadratic (multi-scale)</option>
+                            <option value="composite">Composite (mixed kernels)</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group">
+                        <label>Sequence Length:</label>
+                        <input type="number" id="gp_length" value="104" min="20" max="500" step="10">
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <button class="btn btn-primary" id="generate-btn" onclick="generateModel()">🚀 Generate &
+                    Simulate</button>
+                <button class="btn" id="generate-gp-btn" onclick="generateGPSample()"
+                    style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%); color: white; display: none;">📈
+                    Generate GP Sample</button>
+                <button class="btn btn-secondary" onclick="randomize()">🎲 Randomize All</button>
+            </div>
+
+            <!-- Visualization Panel -->
+            <div class="viz-panel">
+                <div id="results-container" style="display: none;">
+                    <!-- Statistics -->
+                    <div class="result-stats" id="stats-container"></div>
+
+                    <!-- Plots -->
+                    <div class="plot-container">
+                        <h3 style="color: #667eea; margin-bottom: 15px;">Compartment Dynamics</h3>
+                        <div id="plot-compartments"></div>
+                    </div>
+
+                    <div class="plot-container">
+                        <h3 style="color: #667eea; margin-bottom: 15px;">Effective Reproduction Number (R_t)</h3>
+                        <div id="plot-rt"></div>
+                    </div>
+
+                    <div id="group-plot-container" class="plot-container hidden">
+                        <h3 style="color: #28a745; margin-bottom: 15px;">Group-Specific Infected Trajectories</h3>
+                        <div id="plot-groups"></div>
+                    </div>
+                </div>
+
+                <div id="loading-container" style="display: none;">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Generating model and running simulation...</p>
+                    </div>
+                </div>
+
+                <div id="error-container" class="hidden">
+                    <div class="info-box error" id="error-message"></div>
+                </div>
+
+                <div id="welcome-container">
+                    <div style="text-align: center; padding: 60px 40px; color: #6c757d;">
+                        <h2 style="font-size: 2em; margin-bottom: 20px;">Welcome to EpiRecipe Pipeline Builder</h2>
+                        <p style="font-size: 1.2em; line-height: 1.6; max-width: 600px; margin: 0 auto;">
+                            This interface connects to the real <code>pipeline.py</code> backend to generate and
+                            simulate
+                            compartmental epidemic models.
+                        </p>
+                        <div
+                            style="margin-top: 40px; padding: 30px; background: #f8f9fa; border-radius: 8px; max-width: 700px; margin: 40px auto 0;">
+                            <h3 style="color: #667eea; margin-bottom: 15px;">Features</h3>
+                            <ul style="text-align: left; line-height: 2;">
+                                <li>Uses actual Python pipeline for authentic results</li>
+                                <li>Group stratification with mixing matrices</li>
+                                <li>Real transition rules from catalog.json</li>
+                                <li>Configurable compartments and parameters</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Update range value displays
+        document.querySelectorAll('input[type="range"]').forEach(input => {
+            input.addEventListener('input', function () {
+                const valueSpan = document.getElementById(this.id + '_val');
+                if (valueSpan) {
+                    let value = parseFloat(this.value);
+                    if (value < 1) {
+                        valueSpan.textContent = value.toFixed(3);
+                    } else if (value < 10) {
+                        valueSpan.textContent = value.toFixed(1);
+                    } else {
+                        valueSpan.textContent = Math.round(value);
+                    }
+                }
+            });
+        });
+
+        // Toggle group controls
+        function toggleGroupControls() {
+            const enabled = document.getElementById('enable_groups').checked;
+            const groupControls = document.getElementById('group-controls');
+
+            if (enabled) {
+                groupControls.classList.remove('hidden');
+                updateGroupConfigs();
+            } else {
+                groupControls.classList.add('hidden');
+            }
+        }
+
+        // Toggle seasonal forcing controls
+        function toggleSeasonalControls() {
+            const enabled = document.getElementById('enable_seasonal').checked;
+            const seasonalControls = document.getElementById('seasonal-controls');
+
+            if (enabled) {
+                seasonalControls.classList.remove('hidden');
+            } else {
+                seasonalControls.classList.add('hidden');
+            }
+        }
+
+        // Toggle GP controls
+        function toggleGPControls() {
+            const enabled = document.getElementById('enable_gp').checked;
+            const gpControls = document.getElementById('gp-controls');
+            const gpBtn = document.getElementById('generate-gp-btn');
+
+            if (enabled) {
+                gpControls.classList.remove('hidden');
+                gpBtn.style.display = 'block';
+            } else {
+                gpControls.classList.add('hidden');
+                gpBtn.style.display = 'none';
+            }
+        }
+
+        // Generate GP Sample
+        async function generateGPSample() {
+            const gpBtn = document.getElementById('generate-gp-btn');
+            gpBtn.disabled = true;
+
+            document.getElementById('welcome-container').style.display = 'none';
+            document.getElementById('results-container').style.display = 'none';
+            document.getElementById('error-container').classList.add('hidden');
+            document.getElementById('loading-container').style.display = 'block';
+
+            const params = {
+                kernel: document.getElementById('gp_kernel').value,
+                sequence_length: parseInt(document.getElementById('gp_length').value)
+            };
+
+            try {
+                const response = await fetch('/api/generate_gp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(params)
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Server error');
+                }
+
+                const data = await response.json();
+                renderGPResults(data, params);
+
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('loading-container').style.display = 'none';
+                document.getElementById('error-container').classList.remove('hidden');
+                document.getElementById('error-message').textContent = `Error: ${error.message}. Make sure the Flask server is running.`;
+            } finally {
+                gpBtn.disabled = false;
+            }
+        }
+
+        // Render GP results
+        function renderGPResults(data, params) {
+            // Create stats
+            let statsHTML = `
+                <div class="stat-card" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);">
+                    <div class="stat-value">${params.kernel}</div>
+                    <div class="stat-label">Kernel Type</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);">
+                    <div class="stat-value">${data.values.length}</div>
+                    <div class="stat-label">Sequence Length</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);">
+                    <div class="stat-value">${data.kernel_used || 'unknown'}</div>
+                    <div class="stat-label">Actual Kernel</div>
+                </div>
+            `;
+            document.getElementById('stats-container').innerHTML = statsHTML;
+
+            // Plot GP sample
+            Plotly.newPlot('plot-compartments', [
+                {
+                    x: Array.from({ length: data.values.length }, (_, i) => i),
+                    y: data.values,
+                    name: 'GP Sample',
+                    type: 'scatter',
+                    mode: 'lines',
+                    line: { width: 2, color: '#9b59b6' }
+                }
+            ], {
+                xaxis: { title: 'Time Step' },
+                yaxis: { title: 'Value' },
+                hovermode: 'x unified',
+                showlegend: true,
+                height: 400,
+                title: 'Gaussian Process Sample (I-only mode)'
+            }, { responsive: true });
+
+            // Hide R_t plot for GP
+            document.getElementById('plot-rt').innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">R_t not applicable for GP samples</div>';
+            document.getElementById('group-plot-container').classList.add('hidden');
+
+            // Show results
+            document.getElementById('loading-container').style.display = 'none';
+            document.getElementById('results-container').style.display = 'block';
+        }
+
+        // Update group configurations
+        function updateGroupConfigs() {
+            const numGroups = parseInt(document.getElementById('num_groups').value);
+            const container = document.getElementById('groups-container');
+            const mixingType = document.getElementById('mixing_type').value;
+
+            // Show/hide assortativity control
+            const assortControl = document.getElementById('assortativity-control');
+            assortControl.classList.toggle('hidden', mixingType !== 'assortative');
+
+            container.innerHTML = '';
+
+            const groupNames = ['Children', 'Adults', 'Elderly', 'Youth', 'Seniors', 'Middle-aged'];
+
+            for (let i = 0; i < numGroups; i++) {
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'group-config';
+                groupDiv.innerHTML = `
+                    <h4>Group ${i + 1}: ${groupNames[i] || 'Group ' + (i + 1)}</h4>
+                    <div class="mini-control">
+                        <label>Population:</label>
+                        <input type="number" id="group${i}_pop" value="${Math.round(100 / numGroups)}" min="1" max="100" step="1">
+                        <span class="mini-value" id="group${i}_pop_val">${Math.round(100 / numGroups)}%</span>
+                    </div>
+                    <div class="mini-control">
+                        <label>Contact Rate:</label>
+                        <input type="range" id="group${i}_contact" value="1.0" min="0.3" max="2.0" step="0.1">
+                        <span class="mini-value" id="group${i}_contact_val">1.0x</span>
+                    </div>
+                    <div class="mini-control">
+                        <label>Susceptibility:</label>
+                        <input type="range" id="group${i}_suscept" value="1.0" min="0.5" max="1.5" step="0.1">
+                        <span class="mini-value" id="group${i}_suscept_val">1.0x</span>
+                    </div>
+                    <div class="mini-control">
+                        <label>Infectivity:</label>
+                        <input type="range" id="group${i}_infect" value="1.0" min="0.8" max="1.2" step="0.05">
+                        <span class="mini-value" id="group${i}_infect_val">1.0x</span>
+                    </div>
+                `;
+                container.appendChild(groupDiv);
+
+                // Add event listeners for mini controls
+                ['contact', 'suscept', 'infect'].forEach(param => {
+                    document.getElementById(`group${i}_${param}`).addEventListener('input', function () {
+                        document.getElementById(`group${i}_${param}_val`).textContent = parseFloat(this.value).toFixed(1) + 'x';
+                    });
+                });
+
+                document.getElementById(`group${i}_pop`).addEventListener('input', function () {
+                    document.getElementById(`group${i}_pop_val`).textContent = this.value + '%';
+                });
+            }
+        }
+
+        function getSelectedCompartments() {
+            const compartments = ['S', 'I'];
+            ['E', 'R', 'H', 'V', 'Q', 'D'].forEach(comp => {
+                if (document.getElementById('comp_' + comp).checked) {
+                    compartments.push(comp);
+                }
+            });
+            return compartments;
+        }
+
+        function getGroupConfigs() {
+            const numGroups = parseInt(document.getElementById('num_groups').value);
+            const groups = [];
+
+            for (let i = 0; i < numGroups; i++) {
+                groups.push({
+                    name: `group${i}`,
+                    pop_fraction: parseFloat(document.getElementById(`group${i}_pop`).value) / 100,
+                    contact: parseFloat(document.getElementById(`group${i}_contact`).value),
+                    suscept: parseFloat(document.getElementById(`group${i}_suscept`).value),
+                    infect: parseFloat(document.getElementById(`group${i}_infect`).value)
+                });
+            }
+
+            // Normalize population fractions
+            const total = groups.reduce((sum, g) => sum + g.pop_fraction, 0);
+            groups.forEach(g => g.pop_fraction /= total);
+
+            return groups;
+        }
+
+        function updateTimeUnitLabel() {
+            const unit = document.getElementById('time_unit').value === 'days' ? 'days' : 'weeks';
+            document.getElementById('time_unit_steps_label').textContent = unit;
+        }
+
+        async function generateModel() {
+            const generateBtn = document.getElementById('generate-btn');
+            generateBtn.disabled = true;
+
+            document.getElementById('welcome-container').style.display = 'none';
+            document.getElementById('results-container').style.display = 'none';
+            document.getElementById('error-container').classList.add('hidden');
+            document.getElementById('loading-container').style.display = 'block';
+
+            const params = {
+                compartments: getSelectedCompartments(),
+                r0: parseFloat(document.getElementById('r0').value),
+                infectious_period: parseInt(document.getElementById('infectious_period').value),
+                latent_period: parseInt(document.getElementById('latent_period').value),
+                population: parseInt(document.getElementById('population').value),
+                initial_infected: parseInt(document.getElementById('initial_infected').value),
+                max_time_steps: parseInt(document.getElementById('max_time_steps').value),
+                noise_level: parseFloat(document.getElementById('noise_level').value),
+                use_groups: document.getElementById('enable_groups').checked,
+                time_unit: document.getElementById('time_unit').value,
+                seasonal_forcing: document.getElementById('enable_seasonal').checked
+            };
+
+            // Add seasonal forcing params if enabled
+            if (params.seasonal_forcing) {
+                params.seasonal_amplitude = parseFloat(document.getElementById('seasonal_amplitude').value);
+                params.seasonal_period = parseInt(document.getElementById('seasonal_period').value);
+                params.seasonal_phase = parseFloat(document.getElementById('seasonal_phase').value);
+            }
+
+            if (params.use_groups) {
+                params.groups = getGroupConfigs();
+                params.mixing_type = document.getElementById('mixing_type').value;
+                params.assortativity = parseFloat(document.getElementById('assortativity').value);
+            }
+
+            try {
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(params)
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Server error');
+                }
+
+                const data = await response.json();
+                renderResults(data, params);
+
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('loading-container').style.display = 'none';
+                document.getElementById('error-container').classList.remove('hidden');
+                document.getElementById('error-message').textContent = `Error: ${error.message}. Make sure the Flask server is running (python web_server.py)`;
+            } finally {
+                generateBtn.disabled = false;
+            }
+        }
+
+        function renderResults(data, params) {
+            // Update statistics
+            const compartmentData = data.compartments;
+            const peakI = Math.max(...compartmentData.I);
+            const finalRt = data.R_t[data.R_t.length - 1];
+            const unitLabel = params.time_unit === 'days' ? 'days' : 'weeks';
+            const timeAxisTitle = unitLabel === 'days' ? 'Day' : 'Week';
+
+            let statsHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${Math.round(peakI).toLocaleString()}</div>
+                    <div class="stat-label">Peak Infections</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${finalRt.toFixed(2)}</div>
+                    <div class="stat-label">Final R(t)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${params.max_time_steps}</div>
+                    <div class="stat-label">Duration (${unitLabel})</div>
+                </div>
+            `;
+
+            // Add seasonal forcing indicator
+            if (params.seasonal_forcing) {
+                statsHTML += `
+                    <div class="stat-card" style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);">
+                        <div class="stat-value">🌊</div>
+                        <div class="stat-label">Seasonal (ε=${params.seasonal_amplitude})</div>
+                    </div>
+                `;
+            }
+
+            if (params.use_groups) {
+                const numGroups = params.groups.length;
+                statsHTML += `
+                    <div class="stat-card stratified">
+                        <div class="stat-value">${numGroups}</div>
+                        <div class="stat-label">Groups</div>
+                    </div>
+                    <div class="stat-card stratified">
+                        <div class="stat-value">${params.mixing_type}</div>
+                        <div class="stat-label">Mixing</div>
+                    </div>
+                `;
+            }
+
+            document.getElementById('stats-container').innerHTML = statsHTML;
+
+            // Plot compartments
+            const traces = [];
+            params.compartments.forEach(comp => {
+                if (compartmentData[comp] && compartmentData[comp].length > 0) {
+                    traces.push({
+                        x: data.time,
+                        y: compartmentData[comp],
+                        name: comp,
+                        type: 'scatter',
+                        mode: 'lines',
+                        line: { width: 2 }
+                    });
+                }
+            });
+
+            Plotly.newPlot('plot-compartments', traces, {
+                xaxis: { title: timeAxisTitle },
+                yaxis: { title: 'Population' },
+                hovermode: 'x unified',
+                showlegend: true,
+                height: 400
+            }, { responsive: true });
+
+            // Plot R_t
+            Plotly.newPlot('plot-rt', [
+                {
+                    x: data.time,
+                    y: data.R_t,
+                    name: 'R(t)',
+                    type: 'scatter',
+                    mode: 'lines',
+                    line: { width: 3, color: '#e74c3c' }
+                },
+                {
+                    x: data.time,
+                    y: Array(data.time.length).fill(1),
+                    name: 'R=1 threshold',
+                    type: 'scatter',
+                    mode: 'lines',
+                    line: { width: 2, dash: 'dash', color: '#95a5a6' }
+                }
+            ], {
+                xaxis: { title: timeAxisTitle },
+                yaxis: { title: 'Effective Reproduction Number' },
+                hovermode: 'x unified',
+                showlegend: true,
+                height: 300
+            }, { responsive: true });
+
+            // Plot group-specific if applicable
+            if (params.use_groups && data.groups) {
+                const groupTraces = [];
+                const colors = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c'];
+                const groupNames = data.model_info?.group_names || [];
+
+                data.groups.I.forEach((I_group, i) => {
+                    const name = groupNames[i] || `Group ${i + 1}`;
+                    groupTraces.push({
+                        x: data.time,
+                        y: I_group,
+                        name: name,
+                        type: 'scatter',
+                        mode: 'lines',
+                        line: { width: 2.5, color: colors[i % colors.length] }
+                    });
+                });
+
+                Plotly.newPlot('plot-groups', groupTraces, {
+                    xaxis: { title: timeAxisTitle },
+                    yaxis: { title: 'Infected Population' },
+                    hovermode: 'x unified',
+                    showlegend: true,
+                    height: 350
+                }, { responsive: true });
+
+                document.getElementById('group-plot-container').classList.remove('hidden');
+            } else {
+                document.getElementById('group-plot-container').classList.add('hidden');
+            }
+
+            // Show results
+            document.getElementById('loading-container').style.display = 'none';
+            document.getElementById('results-container').style.display = 'block';
+        }
+
+        function randomize() {
+            // Random compartments
+            ['E', 'R', 'H', 'V', 'Q', 'D'].forEach(comp => {
+                document.getElementById('comp_' + comp).checked = Math.random() > 0.5;
+            });
+
+            // Random parameters
+            document.getElementById('r0').value = (Math.random() * 4 + 1).toFixed(1);
+            document.getElementById('infectious_period').value = Math.floor(Math.random() * 15 + 3);
+            document.getElementById('latent_period').value = Math.floor(Math.random() * 10 + 2);
+            document.getElementById('noise_level').value = (Math.random() * 0.08).toFixed(2);
+
+            // Random seasonal forcing (50% chance)
+            if (Math.random() > 0.5) {
+                document.getElementById('enable_seasonal').checked = true;
+                toggleSeasonalControls();
+
+                document.getElementById('seasonal_amplitude').value = (Math.random() * 0.4 + 0.1).toFixed(2);
+                const periods = [26, 52, 104, 156];
+                document.getElementById('seasonal_period').value = periods[Math.floor(Math.random() * periods.length)];
+                document.getElementById('seasonal_phase').value = (Math.random() * 6.28).toFixed(2);
+
+                // Update displays
+                document.getElementById('seasonal_amplitude_val').textContent = parseFloat(document.getElementById('seasonal_amplitude').value).toFixed(2);
+                document.getElementById('seasonal_period_val').textContent = document.getElementById('seasonal_period').value;
+                document.getElementById('seasonal_phase_val').textContent = parseFloat(document.getElementById('seasonal_phase').value).toFixed(1);
+            } else {
+                document.getElementById('enable_seasonal').checked = false;
+                toggleSeasonalControls();
+            }
+
+            // Random groups
+            if (Math.random() > 0.5) {
+                document.getElementById('enable_groups').checked = true;
+                toggleGroupControls();
+
+                const numGroups = Math.floor(Math.random() * 4) + 2;
+                document.getElementById('num_groups').value = numGroups;
+                updateGroupConfigs();
+
+                // Randomize group parameters
+                for (let i = 0; i < numGroups; i++) {
+                    document.getElementById(`group${i}_contact`).value = (Math.random() * 1.5 + 0.4).toFixed(1);
+                    document.getElementById(`group${i}_suscept`).value = (Math.random() * 0.8 + 0.6).toFixed(1);
+                    document.getElementById(`group${i}_infect`).value = (Math.random() * 0.3 + 0.85).toFixed(2);
+
+                    document.getElementById(`group${i}_contact`).dispatchEvent(new Event('input'));
+                    document.getElementById(`group${i}_suscept`).dispatchEvent(new Event('input'));
+                    document.getElementById(`group${i}_infect`).dispatchEvent(new Event('input'));
+                }
+            }
+
+            // Update displays
+            document.querySelectorAll('input[type="range"]').forEach(input => {
+                input.dispatchEvent(new Event('input'));
+            });
+        }
+
+        // Update seasonal period display when select changes
+        function updateSeasonalPeriodDisplay() {
+            document.getElementById('seasonal_period_val').textContent = document.getElementById('seasonal_period').value;
+        }
+
+        // Initialize
+        document.getElementById('mixing_type').addEventListener('change', updateGroupConfigs);
+        document.getElementById('time_unit').addEventListener('change', updateTimeUnitLabel);
+        document.getElementById('seasonal_period').addEventListener('change', updateSeasonalPeriodDisplay);
+        updateTimeUnitLabel();
+    </script>
+</body>
+
+</html>
