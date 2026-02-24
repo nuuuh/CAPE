@@ -63,15 +63,6 @@ Results are saved to `src/results_online/`.
 |---|---|
 | Pertussis, Varicella, Tuberculosis, Measles, TyphoidFever, Mumps, Diphtheria, ScarletFever | Smallpox, Influenza, Pneumonia, AcutePoliomyelitis, MeningococcalMeningitis, Gonorrhea, HepatitisA, HepatitisB, Rubella |
 
-### Evaluation Modes
-
-| Mode | Description |
-|---|---|
-| `zeroshot` | Frozen CAPE with 14 non-learnable ensemble strategies over 20 compartmental masks |
-| `chronos2` | Amazon Chronos-T5 (small) |
-| `moirai` | Salesforce Moirai-1.1-R (small) |
-| `moment` | MOMENT zero-shot |
-
 ### Metrics
 
 - **MSE / MAE** — Standard forecasting error
